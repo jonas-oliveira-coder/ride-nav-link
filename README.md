@@ -34,7 +34,7 @@
 
 ```text
 .
-├── bajaj_bridge/
+├── ride_nav_link/
 │   ├── app/src/main/
 │   │   ├── AndroidManifest.xml
 │   │   ├── java/com/custom/bajajbridge/
@@ -94,6 +94,6 @@ chmod +x build_clean.sh
 
 ### Instalação via ADB
 ```bash
-adb install -r bajaj_bridge/build/RideNavLink.apk
+adb install -r ride_nav_link/build/RideNavLink.apk
 ```
 

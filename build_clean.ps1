@@ -1,7 +1,7 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 $SCRIPT_DIR = $PSScriptRoot
-$PROJECT_DIR = Join-Path $SCRIPT_DIR "bajaj_bridge"
+$PROJECT_DIR = Join-Path $SCRIPT_DIR "ride_nav_link"
 
 # Detecta automaticamente o Android SDK no Windows se existir no ambiente do usuário
 $SDK_DIR = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT } else { "$env:LOCALAPPDATA\Android\Sdk" }

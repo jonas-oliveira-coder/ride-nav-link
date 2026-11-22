@@ -2,7 +2,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$SCRIPT_DIR/bajaj_bridge"
+PROJECT_DIR="$SCRIPT_DIR/ride_nav_link"
 
 SDK_DIR="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}}"
 BUILD_TOOLS="${BUILD_TOOLS:-$(find "$SDK_DIR/build-tools" -maxdepth 1 -mindepth 1 | sort -V | tail -n 1)}"
