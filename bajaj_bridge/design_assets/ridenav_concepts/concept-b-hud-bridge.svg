@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="title">
+  <title id="title">RideNav Link — Concept B: HUD Bridge Chevron</title>
+  <!-- Upper forward navigation arrowhead (45-deg wings, optically centered) -->
+  <path fill="#111111" d="M 128 34 L 196 102 L 128 74 L 60 102 Z"/>
+  <!-- Lower 45-deg link bridge chevron -->
+  <path fill="#111111" d="M 48 184 L 128 104 L 208 184 L 208 218 L 128 138 L 48 218 Z"/>
+</svg>

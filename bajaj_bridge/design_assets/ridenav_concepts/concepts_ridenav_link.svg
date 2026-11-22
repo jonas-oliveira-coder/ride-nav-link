@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1600" height="810" viewBox="0 0 1600 810"><defs><filter id="grey"><feColorMatrix type="saturate" values="0"/></filter></defs><rect width="1600" height="810" fill="#f7f7f4"/><text x="60" y="78" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="40" font-weight="700" fill="#161616">Logo concepts</text><text x="60" y="116" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="20" fill="#6b6b6b">Concepts for review — pick a direction (or tell me what you like in each).</text><rect x="60" y="150" width="474.667" height="600" rx="18" fill="#fff" stroke="#e4e4e0" stroke-width="1"/><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title" viewBox="0 0 256 256" x="90" y="190" width="414.667" height="300" preserveAspectRatio="xMidYMid meet">
+  <title id="c0-title">RideNav Link — Concept A: Split Link Ring &amp; Arrow</title>
+  <!-- Left link arc (center 128,128; R=96, r=68; 116 deg to 244 deg) -->
+  <path fill="#111111" d="M 85.9 214.3 A 96 96 0 0 1 85.9 41.7 L 98.2 66.9 A 68 68 0 0 0 98.2 189.1 Z"/>
+  <!-- Right link arc (center 128,128; R=96, r=68; 296 deg to 64 deg) -->
+  <path fill="#111111" d="M 170.1 41.7 A 96 96 0 0 1 170.1 214.3 L 157.8 189.1 A 68 68 0 0 0 157.8 66.9 Z"/>
+  <!-- Centered forward navigation chevron -->
+  <path fill="#111111" d="M 128 66 L 168 162 L 128 136 L 88 162 Z"/>
+</svg>
+</g><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title" viewBox="0 0 256 256" x="90" y="516" width="64" height="64" preserveAspectRatio="xMidYMid meet">
+  <title id="s064-title">RideNav Link — Concept A: Split Link Ring &amp; Arrow</title>
+  <!-- Left link arc (center 128,128; R=96, r=68; 116 deg to 244 deg) -->
+  <path fill="#111111" d="M 85.9 214.3 A 96 96 0 0 1 85.9 41.7 L 98.2 66.9 A 68 68 0 0 0 98.2 189.1 Z"/>
+  <!-- Right link arc (center 128,128; R=96, r=68; 296 deg to 64 deg) -->
+  <path fill="#111111" d="M 170.1 41.7 A 96 96 0 0 1 170.1 214.3 L 157.8 189.1 A 68 68 0 0 0 157.8 66.9 Z"/>
+  <!-- Centered forward navigation chevron -->
+  <path fill="#111111" d="M 128 66 L 168 162 L 128 136 L 88 162 Z"/>
+</svg>
+</g><text x="122" y="600" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#8a8a8a" text-anchor="middle">64px</text><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title" viewBox="0 0 256 256" x="180" y="548" width="32" height="32" preserveAspectRatio="xMidYMid meet">
+  <title id="s032-title">RideNav Link — Concept A: Split Link Ring &amp; Arrow</title>
+  <!-- Left link arc (center 128,128; R=96, r=68; 116 deg to 244 deg) -->
+  <path fill="#111111" d="M 85.9 214.3 A 96 96 0 0 1 85.9 41.7 L 98.2 66.9 A 68 68 0 0 0 98.2 189.1 Z"/>
+  <!-- Right link arc (center 128,128; R=96, r=68; 296 deg to 64 deg) -->
+  <path fill="#111111" d="M 170.1 41.7 A 96 96 0 0 1 170.1 214.3 L 157.8 189.1 A 68 68 0 0 0 157.8 66.9 Z"/>
+  <!-- Centered forward navigation chevron -->
+  <path fill="#111111" d="M 128 66 L 168 162 L 128 136 L 88 162 Z"/>
+</svg>
+</g><text x="196" y="600" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#8a8a8a" text-anchor="middle">32px</text><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title" viewBox="0 0 256 256" x="238" y="564" width="16" height="16" preserveAspectRatio="xMidYMid meet">
+  <title id="s016-title">RideNav Link — Concept A: Split Link Ring &amp; Arrow</title>
+  <!-- Left link arc (center 128,128; R=96, r=68; 116 deg to 244 deg) -->
+  <path fill="#111111" d="M 85.9 214.3 A 96 96 0 0 1 85.9 41.7 L 98.2 66.9 A 68 68 0 0 0 98.2 189.1 Z"/>
+  <!-- Right link arc (center 128,128; R=96, r=68; 296 deg to 64 deg) -->
+  <path fill="#111111" d="M 170.1 41.7 A 96 96 0 0 1 170.1 214.3 L 157.8 189.1 A 68 68 0 0 0 157.8 66.9 Z"/>
+  <!-- Centered forward navigation chevron -->
+  <path fill="#111111" d="M 128 66 L 168 162 L 128 136 L 88 162 Z"/>
+</svg>
+</g><text x="246" y="600" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#8a8a8a" text-anchor="middle">16px</text><text x="90.0" y="636" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="26" font-weight="700" fill="#161616">A · A: Route Link</text><text x="90.0" y="670" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="19" fill="#555">Anel partido (link BLE) + seta de rota</text><rect x="562.667" y="150" width="474.667" height="600" rx="18" fill="#fff" stroke="#e4e4e0" stroke-width="1"/><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title" viewBox="0 0 256 256" x="592.667" y="190" width="414.667" height="300" preserveAspectRatio="xMidYMid meet">
+  <title id="c1-title">RideNav Link — Concept B: HUD Bridge Chevron</title>
+  <!-- Upper forward navigation arrowhead (45-deg wings, optically centered) -->
+  <path fill="#111111" d="M 128 34 L 196 102 L 128 74 L 60 102 Z"/>
+  <!-- Lower 45-deg link bridge chevron -->
+  <path fill="#111111" d="M 48 184 L 128 104 L 208 184 L 208 218 L 128 138 L 48 218 Z"/>
+</svg>
+</g><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title" viewBox="0 0 256 256" x="592.667" y="516" width="64" height="64" preserveAspectRatio="xMidYMid meet">
+  <title id="s164-title">RideNav Link — Concept B: HUD Bridge Chevron</title>
+  <!-- Upper forward navigation arrowhead (45-deg wings, optically centered) -->
+  <path fill="#111111" d="M 128 34 L 196 102 L 128 74 L 60 102 Z"/>
+  <!-- Lower 45-deg link bridge chevron -->
+  <path fill="#111111" d="M 48 184 L 128 104 L 208 184 L 208 218 L 128 138 L 48 218 Z"/>
+</svg>
+</g><text x="624.667" y="600" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#8a8a8a" text-anchor="middle">64px</text><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title" viewBox="0 0 256 256" x="682.667" y="548" width="32" height="32" preserveAspectRatio="xMidYMid meet">
+  <title id="s132-title">RideNav Link — Concept B: HUD Bridge Chevron</title>
+  <!-- Upper forward navigation arrowhead (45-deg wings, optically centered) -->
+  <path fill="#111111" d="M 128 34 L 196 102 L 128 74 L 60 102 Z"/>
+  <!-- Lower 45-deg link bridge chevron -->
+  <path fill="#111111" d="M 48 184 L 128 104 L 208 184 L 208 218 L 128 138 L 48 218 Z"/>
+</svg>
+</g><text x="698.667" y="600" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#8a8a8a" text-anchor="middle">32px</text><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title" viewBox="0 0 256 256" x="740.667" y="564" width="16" height="16" preserveAspectRatio="xMidYMid meet">
+  <title id="s116-title">RideNav Link — Concept B: HUD Bridge Chevron</title>
+  <!-- Upper forward navigation arrowhead (45-deg wings, optically centered) -->
+  <path fill="#111111" d="M 128 34 L 196 102 L 128 74 L 60 102 Z"/>
+  <!-- Lower 45-deg link bridge chevron -->
+  <path fill="#111111" d="M 48 184 L 128 104 L 208 184 L 208 218 L 128 138 L 48 218 Z"/>
+</svg>
+</g><text x="748.667" y="600" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#8a8a8a" text-anchor="middle">16px</text><text x="592.6666666666667" y="636" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="26" font-weight="700" fill="#161616">B · B: HUD Bridge</text><text x="592.6666666666667" y="670" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="19" fill="#555">Seta + ponte dupla 45° estilo HUD</text><rect x="1065.33" y="150" width="474.667" height="600" rx="18" fill="#fff" stroke="#e4e4e0" stroke-width="1"/><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title" viewBox="0 0 256 256" x="1095.33" y="190" width="414.667" height="300" preserveAspectRatio="xMidYMid meet">
+  <title id="c2-title">RideNav Link — Concept C: Cluster Arrow (Atual)</title>
+  <!-- Open 270-degree instrument cluster arc (center 128, 142; R=96, r=68) -->
+  <path fill="#111111" d="M 60.1 209.9 A 96 96 0 1 1 195.9 209.9 L 176.1 190.1 A 68 68 0 1 0 79.9 190.1 Z"/>
+  <!-- Centered forward navigation chevron -->
+  <path fill="#111111" d="M 128 90 L 173 168 L 128 142 L 83 168 Z"/>
+</svg>
+</g><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title" viewBox="0 0 256 256" x="1095.33" y="516" width="64" height="64" preserveAspectRatio="xMidYMid meet">
+  <title id="s264-title">RideNav Link — Concept C: Cluster Arrow (Atual)</title>
+  <!-- Open 270-degree instrument cluster arc (center 128, 142; R=96, r=68) -->
+  <path fill="#111111" d="M 60.1 209.9 A 96 96 0 1 1 195.9 209.9 L 176.1 190.1 A 68 68 0 1 0 79.9 190.1 Z"/>
+  <!-- Centered forward navigation chevron -->
+  <path fill="#111111" d="M 128 90 L 173 168 L 128 142 L 83 168 Z"/>
+</svg>
+</g><text x="1127.33" y="600" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#8a8a8a" text-anchor="middle">64px</text><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title" viewBox="0 0 256 256" x="1185.33" y="548" width="32" height="32" preserveAspectRatio="xMidYMid meet">
+  <title id="s232-title">RideNav Link — Concept C: Cluster Arrow (Atual)</title>
+  <!-- Open 270-degree instrument cluster arc (center 128, 142; R=96, r=68) -->
+  <path fill="#111111" d="M 60.1 209.9 A 96 96 0 1 1 195.9 209.9 L 176.1 190.1 A 68 68 0 1 0 79.9 190.1 Z"/>
+  <!-- Centered forward navigation chevron -->
+  <path fill="#111111" d="M 128 90 L 173 168 L 128 142 L 83 168 Z"/>
+</svg>
+</g><text x="1201.33" y="600" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#8a8a8a" text-anchor="middle">32px</text><g filter="url(#grey)"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title" viewBox="0 0 256 256" x="1243.33" y="564" width="16" height="16" preserveAspectRatio="xMidYMid meet">
+  <title id="s216-title">RideNav Link — Concept C: Cluster Arrow (Atual)</title>
+  <!-- Open 270-degree instrument cluster arc (center 128, 142; R=96, r=68) -->
+  <path fill="#111111" d="M 60.1 209.9 A 96 96 0 1 1 195.9 209.9 L 176.1 190.1 A 68 68 0 1 0 79.9 190.1 Z"/>
+  <!-- Centered forward navigation chevron -->
+  <path fill="#111111" d="M 128 90 L 173 168 L 128 142 L 83 168 Z"/>
+</svg>
+</g><text x="1251.33" y="600" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="#8a8a8a" text-anchor="middle">16px</text><text x="1095.3333333333335" y="636" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="26" font-weight="700" fill="#161616">C · C: Cluster Arrow (Atual)</text><text x="1095.3333333333335" y="670" font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="19" fill="#555">Arco do painel 270° + seta central</text></svg>

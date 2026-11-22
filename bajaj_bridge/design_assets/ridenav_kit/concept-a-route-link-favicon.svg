@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256"><title>RideNav Link</title><g transform="translate(-35.71 -35.71) scale(1.279)">
+  <title id="title">RideNav Link — Concept A: Split Link Ring &amp; Arrow</title>
+  <!-- Left link arc (center 128,128; R=96, r=68; 116 deg to 244 deg) -->
+  <path fill="#111111" d="M 85.9 214.3 A 96 96 0 0 1 85.9 41.7 L 98.2 66.9 A 68 68 0 0 0 98.2 189.1 Z"/>
+  <!-- Right link arc (center 128,128; R=96, r=68; 296 deg to 64 deg) -->
+  <path fill="#111111" d="M 170.1 41.7 A 96 96 0 0 1 170.1 214.3 L 157.8 189.1 A 68 68 0 0 0 157.8 66.9 Z"/>
+  <!-- Centered forward navigation chevron -->
+  <path fill="#111111" d="M 128 66 L 168 162 L 128 136 L 88 162 Z"/>
+</g></svg>
