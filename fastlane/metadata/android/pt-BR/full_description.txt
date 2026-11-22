@@ -1,0 +1,9 @@
+O RideNav Link é um aplicativo Android nativo e 100% offline (Kotlin puro + Android SDK, sem telemetria em nuvem ou rastreadores) que atua como ponte Bluetooth Low Energy (BLE GATT) entre o smartphone e o painel digital LCD compatível de motocicletas (Bajaj Dominar e Pulsar).
+
+Principais Recursos:
+- Navegação Turn-by-Turn via Google Maps + GPS Híbrido: Captura rotas ativas do Google Maps, ícones de manobra, distâncias, ETD, ETA e saídas de rotatória (1ª a 7ª), refinando a contagem de metros em tempo real via GPS.
+- Chamadas Nativas e VoIP: Detecta ligações recebidas, efetuadas, ativas e perdidas (discador e WhatsApp) com exibição do nome do contato.
+- Telemetria do Telefone (1 Hz): Envia nível de bateria (com animação de carregamento), sinal celular, status de headset HFP e volume.
+- Alertas de SMS e Apps: Encaminha SMS e notificações de aplicativos selecionados para o painel.
+- Mídia e Comandos do Guidão: Envia música, artista e progresso, além de controles bidirecionais pelo punho (volume, atender/recusar chamadas, mídia e rota para casa).
+- Privacidade Total: Zero anúncios, zero analytics e zero envio de dados para servidores externos.

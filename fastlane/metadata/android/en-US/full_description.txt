@@ -1,0 +1,11 @@
+RideNav Link is a native, 100% offline Android application (pure Kotlin + Android SDK, zero cloud telemetry or external trackers) that acts as a Bluetooth Low Energy (BLE GATT) bridge between your smartphone and compatible motorcycle digital LCD clusters (Bajaj Dominar and Pulsar).
+
+Key Features:
+- Turn-by-Turn Navigation via Google Maps + Hybrid GPS: Captures active Google Maps notifications, maneuver icons, distances, ETD, ETA, and roundabout exits (1st to 7th), refining remaining meters in real time via GPS.
+- Native Calls & VoIP: Detects incoming, outgoing, active, and missed calls (dialer and WhatsApp/CallStyle) and resolves contact names.
+- Phone Telemetry (1 Hz): Sends battery bars (with animated charging feedback), cellular signal bars, HFP headset status, and volume level.
+- App & SMS Alerts: Forwards SMS and selected app notifications to the cluster display.
+- Media Control & Track Info: Sends song title, artist, album, and playback progress, plus bidirectional handlebar switch controls (volume, answer/decline calls, media playback, Take Me Home).
+- Privacy First: Zero analytics, zero ads, and zero external servers.
+
+Disclaimer: Independent open-source application compatible with Bajaj Dominar and Pulsar Bluetooth LCD clusters. Not an official product and not affiliated with Bajaj Auto.

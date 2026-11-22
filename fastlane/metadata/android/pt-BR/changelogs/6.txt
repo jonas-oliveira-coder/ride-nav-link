@@ -1,0 +1,4 @@
+- Animação de barras de bateria carregando no painel
+- Revisão completa do parser de notificações e ícones de rotatória do Google Maps
+- Suporte a internacionalização (Inglês padrão + Português BR)
+- Card de apoio ao projeto em Material Design 3 (PIX e Ko-fi)

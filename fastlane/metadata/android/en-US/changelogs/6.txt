@@ -1,0 +1,4 @@
+- Animated battery charging bar indicator on the cluster
+- Improved Google Maps notification & roundabout icon parsing
+- English default locale + Brazilian Portuguese translation (Weblate ready)
+- Material Design 3 support & donations card (PIX / Ko-fi)
