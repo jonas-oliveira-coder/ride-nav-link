@@ -9,3 +9,4 @@ Key Features:
 - Privacy First: Zero analytics, zero ads, and zero external servers.
 
 Disclaimer: Independent open-source application compatible with Bajaj Dominar and Pulsar Bluetooth LCD clusters. Not an official product and not affiliated with Bajaj Auto.
+

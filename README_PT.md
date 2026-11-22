@@ -1,4 +1,4 @@
-# RideNav Link
+﻿# RideNav Link
 
 > **Aviso de Compatibilidade e Independência:**  
 > Aplicativo independente compatível com motocicletas Bajaj Dominar e Pulsar equipadas com painel Bluetooth. Não é um produto oficial e não possui vínculo com a Bajaj Auto.
@@ -62,7 +62,7 @@ O **RideNav Link** é 100% gratuito, offline e de código aberto. Se o aplicativ
 ├── ride_nav_link/
 │   ├── app/src/main/
 │   │   ├── AndroidManifest.xml
-│   │   ├── java/com/custom/bajajbridge/
+│   │   ├── java/com/custom/ridenavlink/
 │   │   │   ├── AppPreferences.kt               # Preferências locais e apps selecionados
 │   │   │   ├── BajajBleManager.kt              # Gerenciador BLE GATT, fila serial, telefonia e watchdog
 │   │   │   ├── BajajBridgeApp.kt               # Application singleton

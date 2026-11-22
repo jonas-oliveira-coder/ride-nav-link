@@ -1,4 +1,4 @@
-﻿package com.custom.bajajbridge
+﻿package com.custom.ridenavlink
 
 import android.Manifest
 import android.app.AlarmManager
@@ -46,8 +46,8 @@ class BajajForegroundService : Service() {
     companion object {
         const val CHANNEL_ID = "ridenav_link_service_channel"
         const val NOTIFICATION_ID = 1001
-        private const val ACTION_UPDATE_STATUS = "com.custom.bajajbridge.ACTION_UPDATE_STATUS"
-        private const val ACTION_SET_LOCATION_MODE = "com.custom.bajajbridge.ACTION_SET_LOCATION_MODE"
+        private const val ACTION_UPDATE_STATUS = "com.custom.ridenavlink.ACTION_UPDATE_STATUS"
+        private const val ACTION_SET_LOCATION_MODE = "com.custom.ridenavlink.ACTION_SET_LOCATION_MODE"
         private const val EXTRA_STATUS_TEXT = "extra_status_text"
         private const val EXTRA_KEEP_WAKELOCK = "extra_keep_wakelock"
         private const val EXTRA_LOCATION_MODE = "extra_location_mode"

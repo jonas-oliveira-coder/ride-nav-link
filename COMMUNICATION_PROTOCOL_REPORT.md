@@ -1,4 +1,4 @@
-# BLE GATT Communication Protocol Report — RideNav Link
+﻿# BLE GATT Communication Protocol Report — RideNav Link
 
 This document details the Bluetooth Low Energy (BLE GATT) communication architecture and Android integration channels implemented in **RideNav Link** (`RideNavLink.apk`).
 
@@ -10,8 +10,8 @@ This document details the Bluetooth Low Energy (BLE GATT) communication architec
 |---|---|
 | **Platform / SDK** | Pure Android SDK in Kotlin (`minSdk = 26`, `targetSdk = 34`), zero hybrid frameworks or external libraries |
 | **UI & Theming** | Material Design 3 visual system with dynamic color theming (`DynamicColors` / adaptive light & dark schemes) |
-| **Turn-by-Turn Navigation** | Google Maps notification capture ([MapsNotificationListener.kt](ride_nav_link/app/src/main/java/com/custom/bajajbridge/MapsNotificationListener.kt)) + dedicated dual-language parser ([GoogleMapsNotificationParser.kt](ride_nav_link/app/src/main/java/com/custom/bajajbridge/GoogleMapsNotificationParser.kt)) + hybrid GPS odometer ([MapsHybridNavigator.kt](ride_nav_link/app/src/main/java/com/custom/bajajbridge/MapsHybridNavigator.kt)) |
-| **BLE GATT Link** | [BajajBleManager.kt](ride_nav_link/app/src/main/java/com/custom/bajajbridge/BajajBleManager.kt) + frame encoder [BajajProtocol.kt](ride_nav_link/app/src/main/java/com/custom/bajajbridge/BajajProtocol.kt) + foreground service [BajajForegroundService.kt](ride_nav_link/app/src/main/java/com/custom/bajajbridge/BajajForegroundService.kt) |
+| **Turn-by-Turn Navigation** | Google Maps notification capture ([MapsNotificationListener.kt](ride_nav_link/app/src/main/java/com/custom/ridenavlink/MapsNotificationListener.kt)) + dedicated dual-language parser ([GoogleMapsNotificationParser.kt](ride_nav_link/app/src/main/java/com/custom/ridenavlink/GoogleMapsNotificationParser.kt)) + hybrid GPS odometer ([MapsHybridNavigator.kt](ride_nav_link/app/src/main/java/com/custom/ridenavlink/MapsHybridNavigator.kt)) |
+| **BLE GATT Link** | [BajajBleManager.kt](ride_nav_link/app/src/main/java/com/custom/ridenavlink/BajajBleManager.kt) + frame encoder [BajajProtocol.kt](ride_nav_link/app/src/main/java/com/custom/ridenavlink/BajajProtocol.kt) + foreground service [BajajForegroundService.kt](ride_nav_link/app/src/main/java/com/custom/ridenavlink/BajajForegroundService.kt) |
 | **Privacy / Network** | **100% offline & local** — zero cloud analytics, tracking, or remote API calls |
 
 ---

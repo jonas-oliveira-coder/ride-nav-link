@@ -1,4 +1,4 @@
-package com.custom.bajajbridge
+﻿package com.custom.ridenavlink
 
 import android.content.Context
 import android.content.res.ColorStateList

@@ -1,4 +1,4 @@
-# Relatório Técnico Completo de Comunicação — RideNav Link
+﻿# Relatório Técnico Completo de Comunicação — RideNav Link
 
 Este documento descreve a arquitetura de comunicação Bluetooth Low Energy (BLE GATT) e os canais de integração Android implementados no **RideNav Link** (`RideNavLink.apk`).
 
@@ -9,9 +9,9 @@ Este documento descreve a arquitetura de comunicação Bluetooth Low Energy (BLE
 | Aspecto | Especificação no **RideNav Link** |
 |---|---|
 | **SDK / Plataforma** | Android SDK puro em Kotlin (`minSdk = 26`, `targetSdk = 34`), sem frameworks híbridos nem dependências externas |
-| **Interface e Tema** | Sistema visual Material Design 3 com suporte a Material You (`DynamicColors` / esquema adaptativo claro e escuro) em [M3DesignSystem.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/M3DesignSystem.kt) |
-| **Navegação Turn-by-Turn** | Captura de notificações do **Google Maps** ([MapsNotificationListener.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/MapsNotificationListener.kt)) + parser dedicado ([GoogleMapsNotificationParser.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/GoogleMapsNotificationParser.kt)) + refinamento GPS híbrido ([MapsHybridNavigator.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/MapsHybridNavigator.kt)) |
-| **Comunicação BLE GATT** | [BajajBleManager.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajBleManager.kt) + codificador de frames [BajajProtocol.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajProtocol.kt) + serviço persistente [BajajForegroundService.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajForegroundService.kt) |
+| **Interface e Tema** | Sistema visual Material Design 3 com suporte a Material You (`DynamicColors` / esquema adaptativo claro e escuro) em [M3DesignSystem.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/M3DesignSystem.kt) |
+| **Navegação Turn-by-Turn** | Captura de notificações do **Google Maps** ([MapsNotificationListener.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/MapsNotificationListener.kt)) + parser dedicado ([GoogleMapsNotificationParser.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/GoogleMapsNotificationParser.kt)) + refinamento GPS híbrido ([MapsHybridNavigator.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/MapsHybridNavigator.kt)) |
+| **Comunicação BLE GATT** | [BajajBleManager.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajBleManager.kt) + codificador de frames [BajajProtocol.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajProtocol.kt) + serviço persistente [BajajForegroundService.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajForegroundService.kt) |
 | **Privacidade / Rede** | **100% local e offline** — sem coleta em nuvem, sem analytics e sem serviços de terceiros |
 
 ---
@@ -29,7 +29,7 @@ O **RideNav Link** comunica-se com o painel digital da motocicleta através de *
 | `CHAR_MEDIA` (`0610`) | `0610676e-6972-6565-6e69-676e4543544f` | Celular → Painel (Write) | **111 bytes** | Mudança de faixa/estado + ticker de `1000 ms` enquanto toca | Título, álbum, artista, tempo decorrido/total e `PlayStatus` (`0/1/2`) |
 | `CHAR_CONTROLS` (`0A10`) | `0a10676e-6972-6565-6e69-676e4543544f` | Painel → Celular (Read Polling) | **≥ 14 bytes** (`0..13`) | Polling a cada `700 ms` | Comandos do punho/guidão (volume, chamada, mídia, Maps, ACKs) |
 
-### Detalhes de Estabilidade do Link BLE ([BajajBleManager.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajBleManager.kt))
+### Detalhes de Estabilidade do Link BLE ([BajajBleManager.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajBleManager.kt))
 
 1. **Conexão e MTU:** Interrompe o scan antes de `connectGatt(..., TRANSPORT_LE)`, solicita `CONNECTION_PRIORITY_HIGH` e `requestMtu(256)` em `onServicesDiscovered`, com **fallback automático de `1500 ms`** caso o stack Bluetooth do aparelho não dispare `onMtuChanged`.
 2. **Fila Serializada e Watchdog:** Todas as leituras e escritas GATT passam por uma fila única (`gattQueue`) com timeout de **`1200 ms`** por operação e watchdog a cada **`3000 ms`** para evitar travamentos no barramento BLE.
@@ -42,7 +42,7 @@ O **RideNav Link** comunica-se com o painel digital da motocicleta através de *
 
 ### 3.1 Estrutura do Pacote de 48 Bytes
 
-Implementado em [`createTbtPacket`](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajProtocol.kt):
+Implementado em [`createTbtPacket`](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajProtocol.kt):
 
 | Byte(s) | Campo | Codificação / Regra |
 |---|---|---|
@@ -58,7 +58,7 @@ Implementado em [`createTbtPacket`](bajaj_bridge/app/src/main/java/com/custom/ba
 | `15..46` | Nome da via (US-ASCII) | Normalizado sem acentos, apenas `[0-9a-zA-Z.]`, truncado em até `31 + "."` |
 | `47` | **Checksum** | Soma simples de `bytes[0..46]` com máscara `& 0xFF` |
 
-- **Encerramento da navegação:** [`createTbtEndPacket`](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajProtocol.kt) envia um pacote de **48 bytes zerados** para limpar a tela TBT do painel.
+- **Encerramento da navegação:** [`createTbtEndPacket`](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajProtocol.kt) envia um pacote de **48 bytes zerados** para limpar a tela TBT do painel.
 - **Regra de piscar (`maneuverForDistance`):**
   - Destino (`'H'`, `72`): alterna para `'b'` (`98`) quando `< 40 m`.
   - Demais manobras com forma piscante: somam `+32` (maiúscula → minúscula ASCII) quando `< 100 m`.
@@ -94,11 +94,11 @@ Implementado em [`createTbtPacket`](bajaj_bridge/app/src/main/java/com/custom/ba
 ### 3.3 Captura no Google Maps + Interpolação GPS Híbrida
 
 Como o Google Maps emite notificações em marcos discretos (ex.: `300 m`, `200 m`, `100 m`), o **RideNav Link** mantém a contagem fluida e precisa em duas etapas:
-1. **[GoogleMapsNotificationParser.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/GoogleMapsNotificationParser.kt):**
+1. **[GoogleMapsNotificationParser.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/GoogleMapsNotificationParser.kt):**
    - Extrai distância da próxima manobra (`km`, `m`, `mi`, `ft`, `yd`), distância restante total (ETD) e ETA (PT-BR e EN, relógio `HH:mm` ou duração `Xh Ymin`).
    - Isola a cláusula principal da instrução e remove dicas secundárias entre parênteses para evitar leituras erradas de distância ou manobra (como saídas de rotatória).
    - Detecta explicitamente frases de **chegada ao destino**, recálculo e saída da rotatória (`1ª` a `7ª`, com inferência direcional quando omitida).
-2. **[MapsHybridNavigator.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/MapsHybridNavigator.kt):**
+2. **[MapsHybridNavigator.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/MapsHybridNavigator.kt):**
    - Usa a notificação do Google Maps como âncora oficial e ativa o `LocationManager` (`GPS_PROVIDER` a `900 ms`, com fallback para `FUSED_PROVIDER`/`NETWORK_PROVIDER` após `3,5 s` sem GPS) apenas enquanto há rota ativa.
    - Desconta os metros percorridos entre marcos, filtra ruído parado (`speed < 0.8 m/s`) e saltos irreais (`> 65 m/s`), evitando regressão de distância se o Google Maps re-postar a mesma âncora apenas para atualizar o ETA.
    - **Retenção de chegada ao destino:** ao detectar chegada (ou encerramento da notificação já próximo ao destino), mantém a indicação de chegada (`0 m`, bandeira piscante `'b'`) no painel por um intervalo de retenção (`22 s` a `35 s`) antes de enviar `createTbtEndPacket()`.
@@ -109,7 +109,7 @@ Como o Google Maps emite notificações em marcos discretos (ex.: `300 m`, `200 
 
 ### 4.1 Pacote `CHAR_STATUS` (`0210` — 55 bytes, a cada 1000 ms)
 
-Implementado em [`createPhoneStatusPacket`](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajProtocol.kt):
+Implementado em [`createPhoneStatusPacket`](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajProtocol.kt):
 
 | Byte(s) | Campo | Codificação |
 |---|---|---|
@@ -126,7 +126,7 @@ Valores de estado: `0 = NO_CALL`, `1 = INCOMING`, `2 = OUTGOING`, `3 = ACTIVE`, 
 
 ### 4.2 Pacote `CHAR_CALLS` (`0310` — 74 bytes)
 
-Implementado em [`createMissedCallPacket`](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajProtocol.kt):
+Implementado em [`createMissedCallPacket`](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajProtocol.kt):
 - `byte[0] = 1`
 - `byte[1]` = tamanho do nome (`0..32` bytes UTF-8), `bytes[2..33]` = nome
 - `byte[34]` = tamanho do número (`0..18` bytes UTF-8), `bytes[35..52]` = número
@@ -138,7 +138,7 @@ Implementado em [`createMissedCallPacket`](bajaj_bridge/app/src/main/java/com/cu
    - Identifica chamada efetuada (`IDLE → OFFHOOK`) como `CALL_OUTGOING (2)` e chamada perdida (`RINGING → IDLE`) enviando `CHAR_CALLS`.
    - Ao encerrar chamada ativa (`OFFHOOK → IDLE`), emite pulso `CALL_END (4)` por **`1200 ms`** antes de voltar a `CALL_NO_CALL (0)`.
    - Resolve nomes via `ContactsContract.PhoneLookup` (`READ_CONTACTS`).
-2. **Chamadas VoIP e Dialer ([MapsNotificationListener.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/MapsNotificationListener.kt)):**
+2. **Chamadas VoIP e Dialer ([MapsNotificationListener.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/MapsNotificationListener.kt)):**
    - Monitora notificações `CATEGORY_CALL`, `Notification.CallStyle`, WhatsApp, WhatsApp Business e apps de discador (`dialer`/`telecom`/`incallui`), extraindo interlocutor (`Person`, `EXTRA_TITLE`) e estado (`CALL_INCOMING` vs. `CALL_ACTIVE`).
 3. **Headset HFP e Volume:**
    - Monitora `BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED`, eventos ACL, `VOLUME_CHANGED_ACTION` e `ContentObserver` em `Settings.System.CONTENT_URI`, normalizando `STREAM_VOICE_CALL` (em chamada) ou `STREAM_MUSIC` para `0..10`.
@@ -147,7 +147,7 @@ Implementado em [`createMissedCallPacket`](bajaj_bridge/app/src/main/java/com/cu
 
 ## 5. Canal 3 — SMS Nativo e Notificações de Aplicativos (`0410` — `CHAR_ALERTS`)
 
-Implementado em [`createAlertPacket`](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajProtocol.kt):
+Implementado em [`createAlertPacket`](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajProtocol.kt):
 - **Tamanho total:** **40 bytes**
 - `byte[0]` = `alertType` (`1` = `ALERT_SMS`, ícone SMS piscante; `2` = `ALERT_WHATSAPP`, ícone de mensagem/app piscante)
 - `byte[1]` = tamanho do texto (`0..32` bytes UTF-8)
@@ -161,7 +161,7 @@ Implementado em [`createAlertPacket`](bajaj_bridge/app/src/main/java/com/custom/
 
 ## 6. Canal 4 — Mídia e Áudio (`0610` — `CHAR_MEDIA`)
 
-Implementado em [`createMusicPacket`](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajProtocol.kt):
+Implementado em [`createMusicPacket`](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajProtocol.kt):
 
 | Byte(s) | Campo | Codificação |
 |---|---|---|
@@ -173,13 +173,13 @@ Implementado em [`createMusicPacket`](bajaj_bridge/app/src/main/java/com/custom/
 | `102..103` | Duração total (segundos) | `Short` **Big-Endian** |
 | `104` | `PlayStatus` | `0 = NONE`, `1 = PAUSED`, `2 = PLAY` |
 
-O [MapsNotificationListener.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/MapsNotificationListener.kt) registra `MediaSessionManager.OnActiveSessionsChangedListener` e `MediaController.Callback`, interpola a posição em tempo real pelo `playbackSpeed`, valida áudio ativo via `AudioManager.isMusicActive`, atualiza a cada `1000 ms` durante a reprodução e possui fallback via notificação contínua caso nenhum `MediaController` esteja vinculado.
+O [MapsNotificationListener.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/MapsNotificationListener.kt) registra `MediaSessionManager.OnActiveSessionsChangedListener` e `MediaController.Callback`, interpola a posição em tempo real pelo `playbackSpeed`, valida áudio ativo via `AudioManager.isMusicActive`, atualiza a cada `1000 ms` durante a reprodução e possui fallback via notificação contínua caso nenhum `MediaController` esteja vinculado.
 
 ---
 
 ## 7. Canal 5 — Comandos Bidirecionais do Guidão (`0A10` — `CHAR_CONTROLS`)
 
-O painel disponibiliza o estado dos botões físicos do punho esquerdo por **polling de leitura a cada `700 ms`** na característica `0A10` ([`parseControlsPacket`](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajProtocol.kt)), detectando comandos por mudança de estado (borda) após 2 leituras iniciais de baseline:
+O painel disponibiliza o estado dos botões físicos do punho esquerdo por **polling de leitura a cada `700 ms`** na característica `0A10` ([`parseControlsPacket`](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajProtocol.kt)), detectando comandos por mudança de estado (borda) após 2 leituras iniciais de baseline:
 
 | Byte | Máscara / Bits | Campo | Ação executada no RideNav Link |
 |---|---|---|---|
@@ -202,8 +202,8 @@ O painel disponibiliza o estado dos botões físicos do punho esquerdo por **pol
 
 ## 8. Ciclo de Vida, Background e Permissões
 
-- **[BajajForegroundService.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajForegroundService.kt):** serviço `START_STICKY` com `foregroundServiceType="connectedDevice|location"`, `PARTIAL_WAKE_LOCK` (`4h`), monitoramento de `BluetoothAdapter.ACTION_STATE_CHANGED` e agendamento de reinício em `1500 ms` via `AlarmManager` em `onTaskRemoved`.
-- **[BootCompletedReceiver.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BootCompletedReceiver.kt):** reinicia o serviço e solicita rebind do listener de notificações após `BOOT_COMPLETED`, `MY_PACKAGE_REPLACED` e `QUICKBOOT_POWERON`.
+- **[BajajForegroundService.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajForegroundService.kt):** serviço `START_STICKY` com `foregroundServiceType="connectedDevice|location"`, `PARTIAL_WAKE_LOCK` (`4h`), monitoramento de `BluetoothAdapter.ACTION_STATE_CHANGED` e agendamento de reinício em `1500 ms` via `AlarmManager` em `onTaskRemoved`.
+- **[BootCompletedReceiver.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BootCompletedReceiver.kt):** reinicia o serviço e solicita rebind do listener de notificações após `BOOT_COMPLETED`, `MY_PACKAGE_REPLACED` e `QUICKBOOT_POWERON`.
 - **Manifesto ([AndroidManifest.xml](bajaj_bridge/app/src/main/AndroidManifest.xml)):** declara apenas permissões necessárias aos recursos locais (`BLUETOOTH_SCAN`, `BLUETOOTH_CONNECT`, `ACCESS_FINE_LOCATION`/`COARSE`, `FOREGROUND_SERVICE_*`, `READ_PHONE_STATE`, `READ_CALL_LOG`, `READ_CONTACTS`, `ANSWER_PHONE_CALLS`, `CALL_PHONE`, `SEND_SMS`, `RECEIVE_SMS`, `POST_NOTIFICATIONS`, `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`), feature opcional `companion_device_setup` e bloco `<queries>` para Google Maps e players de mídia.
 
 ---
@@ -212,9 +212,9 @@ O painel disponibiliza o estado dos botões físicos do punho esquerdo por **pol
 
 | # | Canal / Recurso | Implementação no RideNav Link |
 |---|---|---|
-| 1 | Descoberta, link BLE GATT, MTU 256, prioridade HIGH, watchdog e reconexão | [BajajBleManager.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajBleManager.kt) |
-| 2 | Navegação TBT (`0110` — 48B + checksum + piscar + chegada ao destino) | [BajajProtocol.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajProtocol.kt), [GoogleMapsNotificationParser.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/GoogleMapsNotificationParser.kt), [MapsHybridNavigator.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/MapsHybridNavigator.kt) |
-| 3 | Status do telefone (`0210` — 55B / 1000ms) e chamada perdida (`0310` — 74B) | [BajajProtocol.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajProtocol.kt), [BajajBleManager.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajBleManager.kt) |
-| 4 | Chamadas VoIP (`CallStyle` / WhatsApp / Dialer), SMS nativo e alertas multi-app (`0410` — 40B) | [MapsNotificationListener.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/MapsNotificationListener.kt), [BajajBleManager.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajBleManager.kt) |
-| 5 | Mídia / Música (`0610` — 111B) e controles do guidão (`0A10` — polling `700 ms`) | [MapsNotificationListener.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/MapsNotificationListener.kt), [BajajBleManager.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajBleManager.kt) |
-| 6 | Serviço persistente, boot automático, UI Material 3 e diagnóstico ao vivo | [BajajForegroundService.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BajajForegroundService.kt), [BootCompletedReceiver.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/BootCompletedReceiver.kt), [MainActivity.kt](bajaj_bridge/app/src/main/java/com/custom/bajajbridge/MainActivity.kt) |
+| 1 | Descoberta, link BLE GATT, MTU 256, prioridade HIGH, watchdog e reconexão | [BajajBleManager.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajBleManager.kt) |
+| 2 | Navegação TBT (`0110` — 48B + checksum + piscar + chegada ao destino) | [BajajProtocol.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajProtocol.kt), [GoogleMapsNotificationParser.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/GoogleMapsNotificationParser.kt), [MapsHybridNavigator.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/MapsHybridNavigator.kt) |
+| 3 | Status do telefone (`0210` — 55B / 1000ms) e chamada perdida (`0310` — 74B) | [BajajProtocol.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajProtocol.kt), [BajajBleManager.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajBleManager.kt) |
+| 4 | Chamadas VoIP (`CallStyle` / WhatsApp / Dialer), SMS nativo e alertas multi-app (`0410` — 40B) | [MapsNotificationListener.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/MapsNotificationListener.kt), [BajajBleManager.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajBleManager.kt) |
+| 5 | Mídia / Música (`0610` — 111B) e controles do guidão (`0A10` — polling `700 ms`) | [MapsNotificationListener.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/MapsNotificationListener.kt), [BajajBleManager.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajBleManager.kt) |
+| 6 | Serviço persistente, boot automático, UI Material 3 e diagnóstico ao vivo | [BajajForegroundService.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BajajForegroundService.kt), [BootCompletedReceiver.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/BootCompletedReceiver.kt), [MainActivity.kt](bajaj_bridge/app/src/main/java/com/custom/ridenavlink/MainActivity.kt) |

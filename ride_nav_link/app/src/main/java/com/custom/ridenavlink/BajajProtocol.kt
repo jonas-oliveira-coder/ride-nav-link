@@ -1,4 +1,4 @@
-﻿package com.custom.bajajbridge
+﻿package com.custom.ridenavlink
 
 import java.nio.charset.StandardCharsets
 import java.text.Normalizer

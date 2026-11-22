@@ -1,4 +1,4 @@
-package com.custom.bajajbridge
+﻿package com.custom.ridenavlink
 
 import android.app.Application
 import android.content.Context

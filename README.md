@@ -1,4 +1,4 @@
-# RideNav Link
+﻿# RideNav Link
 
 > **Compatibility and Independence Disclaimer:**  
 > Independent application compatible with Bajaj Dominar and Pulsar motorcycles equipped with Bluetooth LCD dash. It is not an official product and is not affiliated with Bajaj Auto.
@@ -61,7 +61,7 @@ This project uses **Weblate** for community translations:
 ├── ride_nav_link/
 │   ├── app/src/main/
 │   │   ├── AndroidManifest.xml
-│   │   ├── java/com/custom/bajajbridge/
+│   │   ├── java/com/custom/ridenavlink/
 │   │   │   ├── AppPreferences.kt               # Local preferences and app filters
 │   │   │   ├── BajajBleManager.kt              # BLE GATT manager, queue, telephony, watchdog
 │   │   │   ├── BajajBridgeApp.kt               # Application singleton

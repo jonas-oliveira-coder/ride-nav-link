@@ -7,3 +7,4 @@ Principais Recursos:
 - Alertas de SMS e Apps: Encaminha SMS e notificações de aplicativos selecionados para o painel.
 - Mídia e Comandos do Guidão: Envia música, artista e progresso, além de controles bidirecionais pelo punho (volume, atender/recusar chamadas, mídia e rota para casa).
 - Privacidade Total: Zero anúncios, zero analytics e zero envio de dados para servidores externos.
+
