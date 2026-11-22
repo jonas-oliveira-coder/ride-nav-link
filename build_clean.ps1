@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Stop"
 
 $SCRIPT_DIR = $PSScriptRoot
 $PROJECT_DIR = Join-Path $SCRIPT_DIR "ride_nav_link"
