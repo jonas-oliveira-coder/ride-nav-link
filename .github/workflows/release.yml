@@ -71,3 +71,4 @@ jobs:
         with:
           name: RideNavLink-APK
           path: ride_nav_link/build/RideNavLink.apk
+
