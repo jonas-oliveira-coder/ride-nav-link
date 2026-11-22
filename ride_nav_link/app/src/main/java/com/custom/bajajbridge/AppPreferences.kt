@@ -10,21 +10,21 @@ enum class PanelAlertMode(
     val shortLabel: String,
     val description: String
 ) {
-    // Protocolo interno: CHAR_ALERTS tipo 2
+    // Internal protocol: CHAR_ALERTS type 2
     BLINK_WAPP(
         id = "blink_wapp",
         label = "Piscando • Mensagens e apps",
         shortLabel = "Piscando (Mensagens)",
         description = "O ícone de mensagem pisca no painel ao receber uma nova notificação."
     ),
-    // Protocolo interno: CHAR_ALERTS tipo 1
+    // Internal protocol: CHAR_ALERTS type 1
     BLINK_SMS(
         id = "blink_sms",
         label = "Piscando • SMS",
         shortLabel = "Piscando (SMS)",
         description = "Faz o indicador de SMS piscar no painel ao receber uma mensagem."
     ),
-    // Protocolo interno: CHAR_CALLS (Alerta fixo / Chamada no painel)
+    // Internal protocol: CHAR_CALLS (Solid alert / Call on dash)
     SOLID_ALERT(
         id = "solid_alert",
         label = "Aceso fixo • Aviso no painel",

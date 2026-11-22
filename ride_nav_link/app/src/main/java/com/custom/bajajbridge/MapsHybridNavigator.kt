@@ -1,4 +1,4 @@
-package com.custom.bajajbridge
+﻿package com.custom.bajajbridge
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -98,7 +98,7 @@ class MapsHybridNavigator(
     private val fallbackListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
             val now = System.currentTimeMillis()
-            // Só usa provedor auxiliar (Fused/Network) se o GPS dedicado estiver sem sinal há > 3.5s
+            // Only use fallback provider (Fused/Network) if dedicated GPS has no fix for > 3.5s
             if (now - lastGpsFixTimeMs > 3500L) {
                 handleLocationFix(location, fromGps = false)
             }
@@ -157,7 +157,7 @@ class MapsHybridNavigator(
             return
         }
 
-        // Evita sair do estado de chegada por notificações residuais de fim de rota
+        // Prevent exiting arrival state due to residual end-of-route notifications
         if (isNavigating && isArrivedState &&
             provider == activeProvider &&
             parsed.solidManeuverCode == BajajProtocol.ARROW_DESTINATION_SOLID &&
@@ -211,22 +211,22 @@ class MapsHybridNavigator(
             anchorTotalMeters = max(parsed.distanceMeters, parsed.totalDistanceMeters)
             traveledSinceAnchorMeters = 0.0
         } else if (!parsed.isTurnDistanceExact) {
-            // Atualização apenas de ETD/ETA sem distância nova da curva: preserva contagem local
+            // ETD/ETA update without new turn distance: preserve local odometer count
             anchorTurnMeters = currentInterpolatedTurn
             anchorTotalMeters = max(currentInterpolatedTurn, parsed.totalDistanceMeters)
             traveledSinceAnchorMeters = 0.0
         } else if (parsed.distanceMeters == anchorTurnMeters) {
-            // Re-postagem da mesma âncora pelo app de navegação (ex: mudança de ETA): mantém progresso GPS
+            // Navigation re-posted same anchor (e.g. ETA shift): preserve GPS progress
             anchorTotalMeters = minOf(currentInterpolatedTotal, max(currentInterpolatedTurn, parsed.totalDistanceMeters))
         } else {
             val diff = parsed.distanceMeters - currentInterpolatedTurn
             if (diff in 1..60) {
-                // App de navegação soltou o marco oficial um pouco atrasado em relação ao GPS: evita pular para trás
+                // Navigation app sent anchor slightly behind GPS odometer: prevent jumping backwards
                 anchorTurnMeters = parsed.distanceMeters
                 anchorTotalMeters = max(currentInterpolatedTurn, parsed.totalDistanceMeters)
                 traveledSinceAnchorMeters = diff.toDouble()
             } else {
-                // Novo marco oficial ou correção de rota
+                // New official navigation anchor or route recalculation
                 anchorTurnMeters = parsed.distanceMeters
                 anchorTotalMeters = max(parsed.distanceMeters, parsed.totalDistanceMeters)
                 traveledSinceAnchorMeters = 0.0
@@ -288,7 +288,7 @@ class MapsHybridNavigator(
         if (!isNavigating || isArrivedState) return
 
         val now = System.currentTimeMillis()
-        // Filtra fixes com precisão ruim (> 25m) se tivermos sinal recente, eliminando oscilações de 15m/30m
+        // Filter poor accuracy fixes (> 25m) if recent signal is available, eliminating 15m-30m jitter
         if (location.hasAccuracy() && location.accuracy > 25f && (now - lastAnyFixTimeMs) < 8_000L) {
             return
         }
@@ -315,7 +315,7 @@ class MapsHybridNavigator(
         val dtSec = dtMs / 1000.0
         val rawStep = prev.distanceTo(location).toDouble()
 
-        // Ignora saltos irreais de GPS (> 234 km/h)
+        // Discard unrealistic GPS jumps (> 234 km/h)
         if (dtSec > 0.0 && (rawStep / dtSec) > 65.0) {
             lastFixLocation = location
             return
@@ -328,12 +328,12 @@ class MapsHybridNavigator(
         val cappedAcc = if (scaledAcc > 6.0) 6.0 else scaledAcc
         val minStep = if (cappedAcc < 2.0) 2.0 else cappedAcc
 
-        // Se a moto estiver parada ou rastejando no semáforo (< 0.8 m/s), não consome metros com ruído
+        // If motorcycle is stopped or idling (< 0.8 m/s), do not consume meters on noise
         if (effectiveSpeed < 0.8 || rawStep < minStep) {
             return
         }
 
-        // Bounded speed projection: usa velocidade física direta para mitigar o erro lateral de 15m/30m do GPS
+        // Bounded speed projection: use direct physical velocity to mitigate 15m-30m lateral GPS drift
         val stepMeters = if (hasValidSpeed && dtSec >= 0.25 && dtSec <= 4.0) {
             val speedDist: Double = effectiveSpeed * dtSec
             val lower = speedDist * 0.7

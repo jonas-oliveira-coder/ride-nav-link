@@ -1,4 +1,4 @@
-package com.custom.bajajbridge
+﻿package com.custom.bajajbridge
 
 import java.nio.charset.StandardCharsets
 import java.text.Normalizer
@@ -7,7 +7,7 @@ import kotlin.math.max
 
 object BajajProtocol {
 
-    // Códigos ASCII das manobras suportadas pelo cluster BLE
+    // ASCII codes for maneuvers supported by the BLE cluster
     const val ARROW_WRONG_WAY: Byte = 66                  // 'B'
     const val ARROW_SLIGHT_LEFT_SOLID: Byte = 67          // 'C'
     const val ARROW_SLIGHT_LEFT_BLINK: Byte = 99          // 'c'
@@ -39,7 +39,7 @@ object BajajProtocol {
     const val ARROW_FORK_LEFT_BLINK: Byte = 113           // 'q'
     const val ARROW_FORK_RIGHT_SOLID: Byte = 82           // 'R'
     const val ARROW_FORK_RIGHT_BLINK: Byte = 114          // 'r'
-    // Nota de hardware: O visor LCD segmentado da moto não possui segmentos dedicados para balsa/trem.
+    // Hardware note: The motorcycle's segmented LCD lacks dedicated segments for ferry/train.
     const val ARROW_FERRY_TRAIN_SOLID: Byte = 84          // 'T'
     const val ARROW_ROUNDABOUT_RIGHT_SOLID: Byte = 85     // 'U' (mão direita / Brasil)
     const val ARROW_ROUNDABOUT_RIGHT_BLINK: Byte = 117    // 'u'
@@ -51,13 +51,13 @@ object BajajProtocol {
     const val ARROW_KEEP_LEFT_SOLID: Byte = 90            // 'Z'
     const val ARROW_KEEP_LEFT_BLINK: Byte = 122           // 'z'
 
-    // Aliases padrão para uso prático no Brasil (mão direita -> circulação anti-horária 'N')
+    // Default maneuver aliases for standard traffic flow
     const val ARROW_UTURN_SOLID: Byte = ARROW_UTURN_LEFT_SOLID
     const val ARROW_UTURN_BLINK: Byte = ARROW_UTURN_LEFT_BLINK
     const val ARROW_ROUNDABOUT_SOLID: Byte = ARROW_ROUNDABOUT_LEFT_SOLID
     const val ARROW_ROUNDABOUT_BLINK: Byte = ARROW_ROUNDABOUT_LEFT_BLINK
 
-    // Estados de chamada reconhecidos pelo protocolo BLE do cluster
+    // Call states recognized by cluster BLE protocol
     const val CALL_NO_CALL: Int = 0
     const val CALL_INCOMING: Int = 1
     const val CALL_OUTGOING: Int = 2
@@ -68,7 +68,7 @@ object BajajProtocol {
     const val ALERT_WHATSAPP: Byte = 2
     const val MAX_ALERT_BYTES: Int = 32
 
-    // Estados de reprodução de mídia no protocolo BLE
+    // Media playback states in BLE protocol
     const val PLAY_STATUS_NONE: Byte = 0
     const val PLAY_STATUS_PAUSED: Byte = 1
     const val PLAY_STATUS_PLAY: Byte = 2
@@ -241,7 +241,7 @@ object BajajProtocol {
         val nextDist = formatDistance(safeDist.toDouble())
         val totalDist = formatDistance(safeTotal.toDouble())
 
-        // ETA calculado dinamicamente a partir do horário atual caso não informado
+        // Dynamically compute ETA from current time if not provided
         val cal = Calendar.getInstance()
         val estSeconds = if (etaSeconds >= 0) etaSeconds else max(60, safeTotal / 12)
         cal.add(Calendar.SECOND, estSeconds)
@@ -260,7 +260,7 @@ object BajajProtocol {
         }
         val resolvedMinutes = if (etaMinutes >= 0) (etaMinutes % 60) else cal.get(Calendar.MINUTE)
 
-        // Byte 0: bit 0 = ativo (1), bits 4..7 = flag metros (nextDist[0]), bit 7 = PM (!isAm)
+        // Byte 0: bit 0 = active (1), bits 4..7 = meters flag (nextDist[0]), bit 7 = PM (!isAm)
         var b0 = 1
         b0 = b0 or ((nextDist[0].toInt() and 0x0F) shl 4)
         if (!resolvedIsAm) {
@@ -268,16 +268,16 @@ object BajajProtocol {
         }
         packet[0] = b0.toByte()
 
-        // Byte 1: Código ASCII da manobra
+        // Byte 1: Maneuver ASCII code
         packet[1] = maneuverCode
 
-        // Bytes 2..5: Distância até a próxima manobra (ordem little-endian nos pares)
+        // Bytes 2..5: Distance to next maneuver (little-endian pairs)
         packet[2] = nextDist[4]
         packet[3] = nextDist[3]
         packet[4] = nextDist[2]
         packet[5] = nextDist[1]
 
-        // Byte 6: Minutos do ETA
+        // Byte 6: ETA minutes
         packet[6] = resolvedMinutes.toByte()
 
         // Byte 7: Hora (1..12) | (roundaboutExit << 4)

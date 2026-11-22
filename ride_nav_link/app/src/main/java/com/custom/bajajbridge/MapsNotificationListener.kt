@@ -1,4 +1,4 @@
-package com.custom.bajajbridge
+﻿package com.custom.bajajbridge
 
 import android.app.Notification
 import android.app.PendingIntent
@@ -152,7 +152,7 @@ class MapsNotificationListener : NotificationListenerService() {
             return inst.performTransportAction { it.skipToNext() }
         }
 
-        // Chama skipToPrevious() duas vezes para reiniciar a faixa ou voltar à anterior conforme esperado pelo controle do guidão
+        // Invoke skipToPrevious() twice to restart track or seek previous per handlebar switch convention
         fun skipToPreviousTwice(): Boolean {
             val inst = activeInstance ?: return false
             return inst.performTransportAction { controls ->
@@ -475,15 +475,15 @@ class MapsNotificationListener : NotificationListenerService() {
 
         bleManager.setNotificationListenerConnected(true)
 
-        // Ignorar notificações próprias do RideNav Link
+        // Ignore RideNav Link own notifications
         if (pkg == packageName) return
 
-        // Ignorar notificações de resumo de grupo (evita duplicatas e falsos positivos)
+        // Ignore group summary notifications (avoids duplicates and false triggers)
         if ((notification.flags and Notification.FLAG_GROUP_SUMMARY) != 0) {
             return
         }
 
-        // 1. Interceptar Chamadas em tempo real (Telefone / Samsung InCallUI / Google Dialer / WhatsApp / W4B)
+        // 1. Intercept real-time calls (Telephony / Samsung InCallUI / Google Dialer / WhatsApp / W4B)
         if (isCallCandidate(pkg, notification)) {
             val callOutcome = extractCallStateAndCaller(notification, extras, pkg, bleManager)
             if (callOutcome != null) {
@@ -505,13 +505,13 @@ class MapsNotificationListener : NotificationListenerService() {
             }
         }
 
-        // 2. Interceptar Navegação (Google Maps)
+        // 2. Intercept Navigation (Google Maps)
         if (pkg == MAPS_PACKAGE) {
             handleMapsNavigationNotification(notification, extras, bleManager)
             return
         }
 
-        // 3. Fallback de Música via notificação apenas se nenhum MediaController ativo estiver vinculado
+        // 3. Media playback notification fallback only if no active MediaController is bound
         val isOngoing = (notification.flags and Notification.FLAG_ONGOING_EVENT) != 0 ||
             (notification.flags and Notification.FLAG_FOREGROUND_SERVICE) != 0
         if (isOngoing && activeMediaController == null &&
@@ -535,7 +535,7 @@ class MapsNotificationListener : NotificationListenerService() {
             return
         }
 
-        // 4. Alertas configuráveis por aplicativo selecionado (CHAR_ALERTS piscante)
+        // 4. Configurable alerts for selected apps (CHAR_ALERTS flashing)
         if (isOngoing) {
             return
         }
@@ -570,14 +570,14 @@ class MapsNotificationListener : NotificationListenerService() {
             return
         }
 
-        // Ignora re-posts antigos (ex: histórico ou atualização silenciosa ao abrir o serviço)
+        // Ignore stale re-posts (e.g. notification history or silent service bootstrap updates)
         val postTime = sbn.postTime
         val now = System.currentTimeMillis()
         if (postTime > 0L && (now - postTime) > 60_000L) {
             return
         }
 
-        // Evita re-piscar o painel em atualizações silenciosas (FLAG_ONLY_ALERT_ONCE)
+        // Avoid re-flashing cluster on silent updates (FLAG_ONLY_ALERT_ONCE)
         val sbnKey = sbn.key ?: "$pkg:${sbn.id}"
         val contentSig = "$pkg|$title|$text"
         val prev = activeAlertSignatures[sbnKey]

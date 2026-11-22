@@ -1,4 +1,4 @@
-package com.custom.bajajbridge
+﻿package com.custom.bajajbridge
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -212,8 +212,8 @@ class MaintenanceManager(
         val rawNext: Int = currentWhole + deltaKm
         val nextWhole: Int = if (rawNext < 0) 0 else rawNext
 
-        // Auto-calibração inteligente da margem de erro do odômetro GPS:
-        // Se houver pelo menos 1,5 km acumulados de GPS desde o último ajuste, calcula a divergência real
+        // Smart auto-calibration for GPS odometer error margin:
+        // If at least 1.5 km of GPS has accumulated since last calibration, compute actual divergence
         val gpsAddedMeters = preferences.getGpsAddedMetersSinceSync()
         val gpsAddedKm = gpsAddedMeters / 1000.0
         var factorUpdated = false
@@ -540,7 +540,7 @@ class MaintenanceManager(
         val rawStep = prev.distanceTo(location).toDouble()
         val speedCalc = rawStep / dtSec
 
-        // Ignora saltos irreais de GPS (> 234 km/h)
+        // Discard unrealistic GPS jumps (> 234 km/h)
         if (speedCalc > MAX_VALID_SPEED_MPS) {
             lastFixLocation = location
             return
@@ -558,13 +558,13 @@ class MaintenanceManager(
             if (s < MIN_STEP_NO_SPEED_METERS) MIN_STEP_NO_SPEED_METERS else s
         }
 
-        // Não soma quilometragem parado no semáforo ou caminhando (< ~10 km/h)
+        // Do not accumulate mileage when stopped at lights or walking (< ~10 km/h)
         if (effectiveSpeed < MIN_MOVING_SPEED_MPS || rawStep < minStep) {
             lastSpeedKmh = if (effectiveSpeed >= 1.5) ((effectiveSpeed * 3.6) + 0.5).toInt() else 0
             return
         }
 
-        // Bounded speed projection: usa velocidade Doppler para filtrar desvio do GPS (evita erro acumulado)
+        // Bounded speed projection: use Doppler speed to filter GPS drift and prevent accumulated errors
         val calculatedStep = if (hasValidSpeed && dtSec >= 0.4 && dtSec <= 6.0) {
             val speedDist: Double = effectiveSpeed * dtSec
             val lower = speedDist * 0.75
@@ -601,7 +601,7 @@ class MaintenanceManager(
         if (lastKm == snapshot.nextMilestoneKm && lastTier == tier) {
             return
         }
-        // Se já notificou vencimento neste marco, não volta para NEAR
+        // If milestone overdue alert already fired, do not downgrade back to NEAR
         if (lastKm == snapshot.nextMilestoneKm && lastTier == "OVERDUE") {
             return
         }

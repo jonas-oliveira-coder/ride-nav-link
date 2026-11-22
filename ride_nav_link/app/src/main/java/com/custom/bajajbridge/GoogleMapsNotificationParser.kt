@@ -1,4 +1,4 @@
-package com.custom.bajajbridge
+﻿package com.custom.bajajbridge
 
 import java.text.Normalizer
 import java.util.Locale
@@ -184,13 +184,13 @@ object GoogleMapsNotificationParser {
         var mergedIsAm = primary.isAm
 
         val extraCandidates = mutableListOf<String>()
-        // Adiciona todas as linhas de texto (incluindo linha 0)
+        // Include all text lines (including line 0)
         extraCandidates.addAll(textLines)
         for (raw in listOf(bigText, text)) {
             if (raw.isNotBlank()) {
                 extraCandidates.add(raw)
                 val parts = raw.split('\n', '•', '|').map { it.trim() }.filter { it.isNotEmpty() }
-                // Inclui todas as partes para não descartar a distância restante quando ela vier no primeiro bloco
+                // Include all parts so remaining distance is preserved when supplied in first chunk
                 extraCandidates.addAll(parts)
             }
         }
@@ -306,7 +306,7 @@ object GoogleMapsNotificationParser {
                 }
             }
             else -> {
-                // Se o Maps não enviou nova instrução (ex: apenas o nome da via na reta):
+                // If Maps sent no new instruction (e.g. only street name on long straight):
                 // Dentro de 3 km (3000 m) com contagem decrescente, exibe a curva para antecipar a manobra.
                 // Acima de 3 km ou se a curva anterior já passou, a manobra é seguir reto (ARROW_STRAIGHT_SOLID).
                 if (fallbackSolidManeuver != null && parsedTurnDist != null &&

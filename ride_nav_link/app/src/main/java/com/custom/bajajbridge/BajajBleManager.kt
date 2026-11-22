@@ -1,4 +1,4 @@
-package com.custom.bajajbridge
+﻿package com.custom.bajajbridge
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -120,7 +120,7 @@ class BajajBleManager(
     private var isHeadsetConnected = false
     private var currentVolumeLevel = 10
 
-    // Estado de chamada
+    // Call state
     private var currentCallState = BajajProtocol.CALL_NO_CALL
     private var currentCallerName = ""
     private var telephonyCallState = TelephonyManager.CALL_STATE_IDLE
@@ -137,7 +137,7 @@ class BajajBleManager(
     private var lastCallDebugSummary = "Livre"
     private var lastStatusMessage = "Desconectado"
 
-    // Estado de navegação retido em nível de aplicação (atualizado mesmo com tela fechada)
+    // Application-level retained navigation state (updated even when activity is destroyed)
     private var isNavigating = false
     private var isNavArrived = false
     private var lastDistanceMeters = 0
@@ -151,7 +151,7 @@ class BajajBleManager(
     private var lastEtaMinutes = -1
     private var lastIsAm: Boolean? = null
 
-    // Diagnóstico observável na UI
+    // UI-observable diagnostics
     private var listenerConnected = false
     private var lastMapsCaptureSummary = "Nenhuma rota capturada"
     private var lastAlertDispatchSummary = "Nenhum alerta enviado"
@@ -161,7 +161,7 @@ class BajajBleManager(
     private var lastNavBleSentCode: Byte = 0
     private var lastNavBleSentDist = -1
 
-    // Controles do guidão (CHAR_CONTROLS 0A10)
+    // Handlebar cluster controls (CHAR_CONTROLS 0A10)
     private var controlsPollCount = 0L
     private var lastCtrlVolume = -1
     private var lastCtrlCallAccept = 0
@@ -176,7 +176,7 @@ class BajajBleManager(
     private var lastCtrlStopSong = -1
     private var lastCtrlLaunchMediaPlayer = -1
 
-    // Deduplicação de SMS recebido
+    // Incoming SMS deduplication
     private var lastNativeSmsSig = ""
     private var lastNativeSmsTimeMs = 0L
 
@@ -203,14 +203,14 @@ class BajajBleManager(
         )
     }
 
-    // Música (CHAR_MEDIA 0610)
+    // Media playback (CHAR_MEDIA 0610)
     private var currentSongTitle = ""
     private var currentArtist = ""
     private var currentAlbum = ""
     private var currentMusicPlayStatus: Byte = BajajProtocol.PLAY_STATUS_NONE
     private var isMusicPlaying = false
 
-    // Callbacks para UI
+    // UI callbacks
     var onStatusChanged: ((String) -> Unit)? = null
     var onDataRefreshed: ((Int, Int, String) -> Unit)? = null
     var onNavigationUpdated: ((NavigationSnapshot) -> Unit)? = null

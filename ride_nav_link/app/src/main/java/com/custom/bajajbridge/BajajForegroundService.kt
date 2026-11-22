@@ -1,4 +1,4 @@
-package com.custom.bajajbridge
+﻿package com.custom.bajajbridge
 
 import android.Manifest
 import android.app.AlarmManager
@@ -197,7 +197,7 @@ class BajajForegroundService : Service() {
         val app = BajajBridgeApp.instance ?: (applicationContext as? BajajBridgeApp) ?: return
         if (!app.preferences.isAutoStartEnabled()) return
 
-        // Garante que o serviço continue ou seja reativado caso o usuário limpe os aplicativos recentes
+        // Ensures the service stays alive or restarts if the user swipes away recent apps
         try {
             val restartIntent = Intent(applicationContext, BajajForegroundService::class.java)
             val pi = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

@@ -15,7 +15,7 @@ cd "$PROJECT_DIR"
 rm -rf build
 mkdir -p build/gen build/obj build/dex build/apk
 
-echo "1. Compilando Recursos..."
+echo "1. Compiling resources..."
 $BUILD_TOOLS/aapt2 compile --dir app/src/main/res -o build/res.zip
 $BUILD_TOOLS/aapt2 link -I "$PLATFORM" \
     --manifest app/src/main/AndroidManifest.xml \
@@ -24,7 +24,7 @@ $BUILD_TOOLS/aapt2 link -I "$PLATFORM" \
     --java build/gen \
     build/res.zip --auto-add-overlay
 
-echo "2. Compilando Kotlin..."
+echo "2. Compiling Kotlin..."
 SOURCES=$(find app/src/main/java build/gen -name "*.kt" -o -name "*.java")
 $KOTLINC -cp "$PLATFORM:$KOTLIN_LIB" -d build/obj $SOURCES
 
@@ -32,13 +32,13 @@ echo "3. Dexing..."
 CLASS_FILES=$(find build/obj -name "*.class")
 $BUILD_TOOLS/d8 --lib "$PLATFORM" --output build/dex $CLASS_FILES "$KOTLIN_LIB"
 
-echo "4. Empacotando APK..."
+echo "4. Packaging APK..."
 cd build/dex
 $BUILD_TOOLS/aapt add ../apk/app.apk classes.dex
 cd "$PROJECT_DIR"
 
-echo "5. Alinhando e Assinando..."
+echo "5. Aligning and signing..."
 $BUILD_TOOLS/zipalign -f -p 4 build/apk/app.apk build/RideNavLink.apk
 $BUILD_TOOLS/apksigner sign --ks "$KEYSTORE" --ks-pass pass:android --key-pass pass:android build/RideNavLink.apk
 
-echo "Pronto! $PROJECT_DIR/build/RideNavLink.apk"
+echo "Done! $PROJECT_DIR/build/RideNavLink.apk"

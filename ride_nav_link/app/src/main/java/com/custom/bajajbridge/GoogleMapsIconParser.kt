@@ -1,4 +1,4 @@
-package com.custom.bajajbridge
+﻿package com.custom.bajajbridge
 
 import android.app.Notification
 import android.content.Context
@@ -38,7 +38,7 @@ object GoogleMapsIconParser {
                 ?: extras.getParcelable("android.largeIcon")
         } else null
 
-        // 1. Decodificar pelo nome do recurso de ícone (rápido e exato)
+        // 1. Decode via icon resource name (fast and exact)
         for (icon in listOfNotNull(smallIcon, largeIcon)) {
             parseResourceName(icon, context, counterClockwise)?.let { parsed ->
                 Log.d(TAG, "Mapeado por recurso: code=${parsed.maneuverCode} exit=${parsed.roundaboutExit} info=${parsed.confidence}")
@@ -46,7 +46,7 @@ object GoogleMapsIconParser {
             }
         }
 
-        // 2. Análise visual de bitmap (forma da seta, anel da rotatória e ângulo da saída)
+        // 2. Visual bitmap analysis (arrow geometry, roundabout ring, and exit angle)
         val largeBitmap: Bitmap? = extractBitmapFromNotification(notification, extras, context)
 
         if (largeBitmap != null) {
@@ -137,7 +137,7 @@ object GoogleMapsIconParser {
         } else null
         val smallIcon = notification.smallIcon
 
-        // Tenta obter como Bitmap com proteção contra ClassCastException (no Android 10+ extras pode conter android.graphics.drawable.Icon)
+        // Attempt to fetch as Bitmap with protection against ClassCastException (on Android 10+ extras may hold Icon)
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 val bmp = extras.getParcelable(Notification.EXTRA_LARGE_ICON, Bitmap::class.java)
@@ -161,7 +161,7 @@ object GoogleMapsIconParser {
                 }
             }
         } catch (_: Exception) {
-            // Ignora falhas de cast de extras da notificação
+            // Ignore notification extras cast failures
         }
 
         return extractBitmapFromIcon(largeIcon, context) ?: extractBitmapFromIcon(smallIcon, context)
