@@ -56,5 +56,12 @@
     <string name="btn_save">Salvar</string>
     <string name="btn_cancel">Cancelar</string>
     <string name="btn_grant_permission">Conceder Permissão</string>
+
+    <!-- Apoio e Doações -->
+    <string name="donation_section_title">Apoiar o Projeto</string>
+    <string name="donation_desc">O RideNav Link é 100% gratuito, offline e de código aberto. Se ele é útil na sua moto, considere apoiar o desenvolvimento!</string>
+    <string name="donation_pix_btn">Copiar Chave PIX</string>
+    <string name="donation_kofi_btn">Apoiar pelo Ko-fi</string>
+    <string name="donation_pix_copied">Chave PIX copiada para a área de transferência!</string>
 </resources>
 

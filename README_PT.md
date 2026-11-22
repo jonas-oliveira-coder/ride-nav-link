@@ -23,6 +23,15 @@ O projeto está integrado ao **Hosted Weblate**:
 
 ---
 
+## ☕ Apoio e Doações
+
+O **RideNav Link** é 100% gratuito, offline e de código aberto. Se o aplicativo é útil nas suas viagens e no dia a dia com a moto, você pode apoiar o desenvolvimento e manutenção contínua:
+
+- **Ko-fi:** [https://ko-fi.com/jonasoliveira](https://ko-fi.com/jonasoliveira)
+- **PIX:** `d5c50784-cdd3-4426-8778-d65e841c8dbb`
+
+---
+
 ## Principais Funcionalidades
 
 - **Navegação Turn-by-Turn via Google Maps + GPS Híbrido:**

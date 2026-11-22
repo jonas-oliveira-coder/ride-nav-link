@@ -22,6 +22,15 @@ This project uses **Weblate** for community translations:
 
 ---
 
+## ☕ Support & Donations
+
+**RideNav Link** is 100% free, offline, and open source. If you like this project and it helps you on your daily rides, consider supporting development:
+
+- **Ko-fi:** [https://ko-fi.com/jonasoliveira](https://ko-fi.com/jonasoliveira)
+- **PIX (Brasil):** `d5c50784-cdd3-4426-8778-d65e841c8dbb`
+
+---
+
 ## Key Features
 
 - **Turn-by-Turn Navigation via Google Maps + Hybrid GPS:**

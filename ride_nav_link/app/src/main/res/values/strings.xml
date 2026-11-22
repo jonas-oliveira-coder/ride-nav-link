@@ -56,5 +56,12 @@
     <string name="btn_save">Save</string>
     <string name="btn_cancel">Cancel</string>
     <string name="btn_grant_permission">Grant Permission</string>
+
+    <!-- Support & Donations -->
+    <string name="donation_section_title">Support the Project</string>
+    <string name="donation_desc">RideNav Link is 100% free, offline, and open source. If it is useful on your rides, consider supporting development!</string>
+    <string name="donation_pix_btn">Copy PIX Key</string>
+    <string name="donation_kofi_btn">Support via Ko-fi</string>
+    <string name="donation_pix_copied">PIX Key copied to clipboard!</string>
 </resources>
 

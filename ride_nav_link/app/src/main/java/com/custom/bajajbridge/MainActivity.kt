@@ -5539,6 +5539,86 @@ class MainActivity : Activity() {
             ).apply { setMargins(0, 0, 0, dp(8)) }
         }
         parent.addView(profileScheduleListContainer)
+
+        // Support & Donation Section (Material 3 Card)
+        addSectionHeader(parent, getString(R.string.donation_section_title))
+        val donationCard = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(16), dp(16), dp(16))
+            background = M3Theme.roundedSurface(scheme.surfaceContainerLow, dp(16).toFloat())
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { setMargins(0, 0, 0, dp(16)) }
+        }
+
+        val donationDesc = TextView(this).apply {
+            text = getString(R.string.donation_desc)
+            M3Theme.applyRole(this, M3TypeRole.BODY_MEDIUM, scheme.onSurfaceVariant)
+            setLineSpacing(0f, 1.25f)
+            setPadding(0, 0, 0, dp(12))
+        }
+        donationCard.addView(donationDesc)
+
+        val donationBtnRow = createTwoColRow(bottomMarginDp = 0)
+
+        // Botão PIX (Copiar chave PIX e tentar abrir app de banco ou Toast)
+        val pixKey = "d5c50784-cdd3-4426-8778-d65e841c8dbb"
+        val btnPix = createM3Button(
+            btnText = getString(R.string.donation_pix_btn),
+            iconRes = R.drawable.ic_check,
+            bgColor = scheme.primary,
+            contentColor = scheme.onPrimary,
+            rippleColor = scheme.rippleOnPrimary,
+            bottomMarginDp = 0
+        ) {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+            if (clipboard != null) {
+                val clip = android.content.ClipData.newPlainText("Chave PIX", pixKey)
+                clipboard.setPrimaryClip(clip)
+            }
+            toast(getString(R.string.donation_pix_copied))
+
+            // Tenta abrir app bancário compatível ou seletor
+            try {
+                val bankIntent = Intent(Intent.ACTION_VIEW).apply {
+                    data = Uri.parse("https://pix.bcb.gov.br")
+                }
+                startActivity(Intent.createChooser(bankIntent, "Abrir app de pagamento"))
+            } catch (_: Exception) {
+                // Toast já confirma chave copiada
+            }
+        }.apply {
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1.0f).apply {
+                setMargins(0, 0, dp(4), 0)
+            }
+        }
+
+        // Botão Ko-fi (Abre o link web do Ko-fi)
+        val btnKofi = createM3Button(
+            btnText = getString(R.string.donation_kofi_btn),
+            iconRes = R.drawable.ic_search,
+            bgColor = scheme.secondaryContainer,
+            contentColor = scheme.onSecondaryContainer,
+            rippleColor = scheme.rippleOnSurface,
+            bottomMarginDp = 0
+        ) {
+            try {
+                val kofiIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/jonasoliveira"))
+                startActivity(kofiIntent)
+            } catch (e: Exception) {
+                toast("Erro ao abrir Ko-fi: ${e.message}")
+            }
+        }.apply {
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1.0f).apply {
+                setMargins(dp(4), 0, 0, 0)
+            }
+        }
+
+        donationBtnRow.addView(btnPix)
+        donationBtnRow.addView(btnKofi)
+        donationCard.addView(donationBtnRow)
+        parent.addView(donationCard)
     }
 
     private fun refreshMaintenanceUi(snapshot: MaintenanceSnapshot) {
