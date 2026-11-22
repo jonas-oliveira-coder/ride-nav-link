@@ -31,6 +31,14 @@ This project uses **Weblate** for community translations:
 
 ---
 
+## 📱 Screenshots
+
+| Cockpit (HUD & Telemetry) | Actions & Test Bench | Profile & Maintenance |
+|---|---|---|
+| <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01_cockpit.png" width="240" alt="Cockpit HUD" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02_actions.png" width="240" alt="Actions & Test Bench" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/03_profile.png" width="240" alt="Profile & Maintenance" /> |
+
+---
+
 ## Key Features
 
 - **Turn-by-Turn Navigation via Google Maps + Hybrid GPS:**

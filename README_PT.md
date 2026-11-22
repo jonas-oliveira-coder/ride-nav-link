@@ -32,6 +32,14 @@ O **RideNav Link** é 100% gratuito, offline e de código aberto. Se o aplicativ
 
 ---
 
+## 📱 Capturas de Tela (Screenshots)
+
+| Cockpit (HUD & Telemetria) | Ações & Bancada de Testes | Perfil & Manutenção |
+|---|---|---|
+| <img src="fastlane/metadata/android/pt-BR/images/phoneScreenshots/01_cockpit.png" width="240" alt="Cockpit HUD" /> | <img src="fastlane/metadata/android/pt-BR/images/phoneScreenshots/02_actions.png" width="240" alt="Ações e Bancada" /> | <img src="fastlane/metadata/android/pt-BR/images/phoneScreenshots/03_profile.png" width="240" alt="Perfil e Manutenção" /> |
+
+---
+
 ## Principais Funcionalidades
 
 - **Navegação Turn-by-Turn via Google Maps + GPS Híbrido:**
