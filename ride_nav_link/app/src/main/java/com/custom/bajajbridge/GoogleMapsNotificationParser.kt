@@ -1,4 +1,4 @@
-﻿package com.custom.bajajbridge
+package com.custom.bajajbridge
 
 import java.text.Normalizer
 import java.util.Locale
@@ -290,10 +290,19 @@ object GoogleMapsNotificationParser {
         }
         val maneuverSourceNorm = normalizeForMatch(maneuverSourceRaw)
 
-        // Explicit text instruction takes precedence over icon/bitmap guesswork
         val textManeuver = detectSolidManeuver(maneuverSourceNorm, roundaboutCounterClockwise)
-        val detectedManeuver = textManeuver ?: iconManeuverCode
-        val isExplicitArrival = isExplicitArrivalPhrase(maneuverSourceNorm, parsedTurnDist, subInfo.totalDistanceMeters, detectedManeuver)
+        val isExplicitArrival = isExplicitArrivalPhrase(
+            maneuverSourceNorm,
+            parsedTurnDist,
+            subInfo.totalDistanceMeters,
+            textManeuver ?: iconManeuverCode
+        )
+        val isExplicitReroute = textManeuver == BajajProtocol.ARROW_WRONG_WAY
+        val detectedManeuver = when {
+            isExplicitArrival -> BajajProtocol.ARROW_DESTINATION_SOLID
+            isExplicitReroute -> BajajProtocol.ARROW_WRONG_WAY
+            else -> iconManeuverCode ?: textManeuver
+        }
 
         val isRerouting = detectedManeuver == BajajProtocol.ARROW_WRONG_WAY && (
             maneuverSourceNorm.contains("recalculando") ||
@@ -319,7 +328,14 @@ object GoogleMapsNotificationParser {
 
         val resolvedSolidManeuver = when {
             isExplicitArrival -> BajajProtocol.ARROW_DESTINATION_SOLID
-            detectedManeuver != null -> detectedManeuver
+            detectedManeuver != null -> {
+                // Keep straight arrow above 3 km on long stretches; show upcoming turn within 3 km
+                if (detectedManeuver != BajajProtocol.ARROW_STRAIGHT_SOLID && resolvedTurnDist > 3000) {
+                    BajajProtocol.ARROW_STRAIGHT_SOLID
+                } else {
+                    detectedManeuver
+                }
+            }
             else -> {
                 // If Maps sent no new instruction (e.g. only street name on long straight):
                 // Keep previous curve maneuver if distance is still decreasing within 3 km
@@ -355,8 +371,8 @@ object GoogleMapsNotificationParser {
                 parseRoundaboutExit(normalizeForMatch(cleanSubText), inferIfMissing = false)
             }
             when {
-                explicitExit in 1..7 -> explicitExit
                 iconRoundaboutExit in 1..7 -> iconRoundaboutExit
+                explicitExit in 1..7 -> explicitExit
                 fallbackSolidManeuver == resolvedSolidManeuver && fallbackRoundaboutExit in 1..7 -> fallbackRoundaboutExit
                 else -> {
                     val inferred = parseRoundaboutExit(maneuverSourceNorm, inferIfMissing = true)
