@@ -35,6 +35,8 @@ jobs:
           unzip -q kotlinc.zip -d /tmp/kotlinc
           echo "/tmp/kotlinc/kotlinc/bin" >> $GITHUB_PATH
           echo "KOTLIN_LIB=/tmp/kotlinc/kotlinc/lib/kotlin-stdlib.jar" >> $GITHUB_ENV
+          echo "BUILD_TOOLS=$ANDROID_HOME/build-tools/34.0.0" >> $GITHUB_ENV
+          echo "PLATFORM=$ANDROID_HOME/platforms/android-34/android.jar" >> $GITHUB_ENV
 
       - name: Create Debug Keystore
         run: |

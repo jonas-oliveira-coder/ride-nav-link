@@ -5,11 +5,16 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR/ride_nav_link"
 
 SDK_DIR="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}}"
-BUILD_TOOLS="${BUILD_TOOLS:-$(find "$SDK_DIR/build-tools" -maxdepth 1 -mindepth 1 | sort -V | tail -n 1)}"
-PLATFORM="${PLATFORM:-$(find "$SDK_DIR/platforms" -name "android.jar" | sort -V | tail -n 1)}"
+BUILD_TOOLS="${BUILD_TOOLS:-$(find "$SDK_DIR/build-tools" -maxdepth 1 -mindepth 1 2>/dev/null | sort -V | tail -n 1)}"
+PLATFORM="${PLATFORM:-$(find "$SDK_DIR/platforms" -name "android.jar" 2>/dev/null | sort -V | tail -n 1)}"
 KOTLINC="${KOTLINC:-kotlinc}"
 KOTLIN_LIB="${KOTLIN_LIB:-$(dirname "$(which kotlinc 2>/dev/null || echo ".")")/../lib/kotlin-stdlib.jar}"
 KEYSTORE="${KEYSTORE:-$HOME/.android/debug.keystore}"
+
+echo "Using BUILD_TOOLS: $BUILD_TOOLS"
+echo "Using PLATFORM: $PLATFORM"
+echo "Using KOTLINC: $(which $KOTLINC || echo "$KOTLINC")"
+echo "Using KOTLIN_LIB: $KOTLIN_LIB"
 
 cd "$PROJECT_DIR"
 rm -rf build
@@ -29,8 +34,13 @@ SOURCES=$(find app/src/main/java build/gen -name "*.kt" -o -name "*.java")
 $KOTLINC -cp "$PLATFORM:$KOTLIN_LIB" -d build/obj $SOURCES
 
 echo "3. Dexing..."
-"$JAVA_HOME/bin/jar" cf build/app.jar -C build/obj . 2>/dev/null || jar cf build/app.jar -C build/obj .
-$BUILD_TOOLS/d8 --lib "$PLATFORM" --output build/dex build/app.jar "$KOTLIN_LIB"
+JAR_BIN="${JAVA_HOME:+$JAVA_HOME/bin/jar}"
+if [ -n "$JAR_BIN" ] && [ -x "$JAR_BIN" ]; then
+    "$JAR_BIN" cf build/app.jar -C build/obj .
+else
+    jar cf build/app.jar -C build/obj .
+fi
+"$BUILD_TOOLS/d8" --lib "$PLATFORM" --output build/dex build/app.jar "$KOTLIN_LIB"
 
 echo "4. Packaging APK..."
 cd build/dex
