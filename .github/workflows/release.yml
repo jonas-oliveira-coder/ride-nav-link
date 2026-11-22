@@ -1,0 +1,73 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build & Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android Build Tools & Platforms
+        run: |
+          sdkmanager "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Install Kotlin Compiler
+        run: |
+          sudo snap install --classic --channel=1.9/stable kotlinc || {
+            curl -sSL https://github.com/JetBrains/kotlin/releases/download/v1.9.22/kotlin-compiler-1.9.22.zip -o kotlinc.zip
+            unzip -q kotlinc.zip -d /tmp/kotlinc
+            echo "/tmp/kotlinc/kotlinc/bin" >> $GITHUB_PATH
+          }
+
+      - name: Create Debug Keystore
+        run: |
+          mkdir -p ~/.android
+          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Build APK via build_clean.sh
+        run: |
+          chmod +x ./build_clean.sh
+          ./build_clean.sh
+
+      - name: Calculate Checksums
+        run: |
+          cd ride_nav_link/build
+          sha256sum RideNavLink.apk > RideNavLink.apk.sha256
+          echo "SHA256: $(cat RideNavLink.apk.sha256)"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            ride_nav_link/build/RideNavLink.apk
+            ride_nav_link/build/RideNavLink.apk.sha256
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+
+      - name: Upload APK Artifact (Workflow Run)
+        uses: actions/upload-artifact@v4
+        with:
+          name: RideNavLink-APK
+          path: ride_nav_link/build/RideNavLink.apk

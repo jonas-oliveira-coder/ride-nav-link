@@ -29,8 +29,8 @@ SOURCES=$(find app/src/main/java build/gen -name "*.kt" -o -name "*.java")
 $KOTLINC -cp "$PLATFORM:$KOTLIN_LIB" -d build/obj $SOURCES
 
 echo "3. Dexing..."
-CLASS_FILES=$(find build/obj -name "*.class")
-$BUILD_TOOLS/d8 --lib "$PLATFORM" --output build/dex $CLASS_FILES "$KOTLIN_LIB"
+"$JAVA_HOME/bin/jar" cf build/app.jar -C build/obj . 2>/dev/null || jar cf build/app.jar -C build/obj .
+$BUILD_TOOLS/d8 --lib "$PLATFORM" --output build/dex build/app.jar "$KOTLIN_LIB"
 
 echo "4. Packaging APK..."
 cd build/dex
