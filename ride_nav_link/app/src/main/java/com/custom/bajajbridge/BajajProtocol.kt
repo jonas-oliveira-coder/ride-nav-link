@@ -209,7 +209,7 @@ object BajajProtocol {
         return result
     }
 
-    private fun batteryPercentToBars(batteryPercent: Int): Int {
+    fun batteryPercentToBars(batteryPercent: Int): Int {
         return when {
             batteryPercent < 20 -> 0
             batteryPercent < 40 -> 1
@@ -332,14 +332,15 @@ object BajajProtocol {
         isHeadsetConnected: Boolean = false,
         volumeLevel: Int = 10,
         callState: Int = CALL_NO_CALL,
-        callerName: String = ""
+        callerName: String = "",
+        batteryBarsOverride: Int? = null
     ): ByteArray {
         val packet = ByteArray(55)
 
         val headsetBit = if (isHeadsetConnected) 1 else 0
         packet[0] = ((headsetBit shl 4) or (volumeLevel and 0x0F) or 0xC0).toByte()
 
-        val battBars = batteryPercentToBars(batteryPercent)
+        val battBars = (batteryBarsOverride ?: batteryPercentToBars(batteryPercent)).coerceIn(0, 4)
         packet[1] = ((callState and 0x07) or (battBars shl 3)).toByte()
         packet[2] = signalLevel.coerceIn(0, 4).toByte()
         packet[3] = if (callState == CALL_ACTIVE) 1 else 0

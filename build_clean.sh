@@ -44,11 +44,15 @@ fi
 
 echo "4. Packaging APK..."
 cd build/dex
-$BUILD_TOOLS/aapt add ../apk/app.apk classes.dex
+if [ -x "$BUILD_TOOLS/aapt" ]; then
+    "$BUILD_TOOLS/aapt" add ../apk/app.apk classes.dex
+else
+    zip -j ../apk/app.apk classes.dex
+fi
 cd "$PROJECT_DIR"
 
 echo "5. Aligning and signing..."
-$BUILD_TOOLS/zipalign -f -p 4 build/apk/app.apk build/RideNavLink.apk
-$BUILD_TOOLS/apksigner sign --ks "$KEYSTORE" --ks-pass pass:android --key-pass pass:android build/RideNavLink.apk
+"$BUILD_TOOLS/zipalign" -f -p 4 build/apk/app.apk build/RideNavLink.apk
+"$BUILD_TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-pass pass:android --key-pass pass:android build/RideNavLink.apk
 
 echo "Done! $PROJECT_DIR/build/RideNavLink.apk"

@@ -38,8 +38,8 @@ object GoogleMapsIconParser {
                 ?: extras.getParcelable("android.largeIcon")
         } else null
 
-        // 1. Decode via icon resource name (fast and exact)
-        for (icon in listOfNotNull(smallIcon, largeIcon)) {
+        // 1. Decode via icon resource name (largeIcon first, as smallIcon is often generic app logo)
+        for (icon in listOfNotNull(largeIcon, smallIcon)) {
             parseResourceName(icon, context, counterClockwise)?.let { parsed ->
                 Log.d(TAG, "Mapeado por recurso: code=${parsed.maneuverCode} exit=${parsed.roundaboutExit} info=${parsed.confidence}")
                 return parsed
@@ -204,8 +204,10 @@ object GoogleMapsIconParser {
         var maxY = 0
 
         val step = if (w > 128) 4 else if (w > 64) 2 else 1
+        var totalSampled = 0
         for (y in 0 until h step step) {
             for (x in 0 until w step step) {
+                totalSampled++
                 val pixel = bitmap.getPixel(x, y)
                 val alpha = (pixel ushr 24) and 0xFF
                 if (alpha > 40) {
@@ -220,7 +222,8 @@ object GoogleMapsIconParser {
             }
         }
 
-        if (count < 15) return null
+        // Reject solid opaque square/circle backgrounds (e.g. adaptive icons without alpha cutout)
+        if (count < 15 || (totalSampled > 0 && count > totalSampled * 0.78)) return null
 
         val cx = sumX.toDouble() / count
         val cy = sumY.toDouble() / count

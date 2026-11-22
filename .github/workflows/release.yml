@@ -31,9 +31,10 @@ jobs:
 
       - name: Install Kotlin Compiler
         run: |
-          curl -sSL https://github.com/JetBrains/kotlin/releases/download/v1.9.22/kotlin-compiler-1.9.22.zip -o kotlinc.zip
+          curl -sSL https://github.com/JetBrains/kotlin/releases/download/v2.1.20/kotlin-compiler-2.1.20.zip -o kotlinc.zip
           unzip -q kotlinc.zip -d /tmp/kotlinc
           echo "/tmp/kotlinc/kotlinc/bin" >> $GITHUB_PATH
+          echo "KOTLINC=/tmp/kotlinc/kotlinc/bin/kotlinc" >> $GITHUB_ENV
           echo "KOTLIN_LIB=/tmp/kotlinc/kotlinc/lib/kotlin-stdlib.jar" >> $GITHUB_ENV
           echo "BUILD_TOOLS=$ANDROID_HOME/build-tools/34.0.0" >> $GITHUB_ENV
           echo "PLATFORM=$ANDROID_HOME/platforms/android-34/android.jar" >> $GITHUB_ENV

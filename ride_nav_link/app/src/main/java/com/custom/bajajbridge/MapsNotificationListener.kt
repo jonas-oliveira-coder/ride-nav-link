@@ -782,7 +782,9 @@ class MapsNotificationListener : NotificationListenerService() {
             (notification.flags and Notification.FLAG_FOREGROUND_SERVICE) != 0 ||
             notification.category == Notification.CATEGORY_NAVIGATION
 
-        if (GoogleMapsNotificationParser.isAmbientSummaryOnly(title, text, bigText)) {
+        if (!isMapsRouteActive && subText.isBlank() &&
+            GoogleMapsNotificationParser.isAmbientSummaryOnly(title, text, bigText)
+        ) {
             return
         }
 

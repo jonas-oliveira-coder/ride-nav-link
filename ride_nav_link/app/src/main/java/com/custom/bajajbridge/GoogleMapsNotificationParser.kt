@@ -98,7 +98,7 @@ object GoogleMapsNotificationParser {
     private val PARENTHETICAL_REGEX = "\\([^)]*\\)".toRegex()
 
     private val LEADING_DISTANCE_PREFIX_REGEX =
-        "^(?:em|in)\\s+[0-9]+(?:[.,][0-9]+)?\\s*(?:km|m|mi|ft|yd)(?![\\p{L}\\p{N}])[,:\\s-]*".toRegex(
+        "^(?:(?:em|in)\\s+)?[0-9]+(?:[.,][0-9]+)?\\s*(?:km|m|mi|ft|yd)(?![\\p{L}\\p{N}])[,:·•|\\s-]+".toRegex(
             RegexOption.IGNORE_CASE
         )
 
@@ -145,6 +145,24 @@ object GoogleMapsNotificationParser {
         return PARENTHETICAL_REGEX.replace(norm, " ")
             .replace("\\s+".toRegex(), " ")
             .trim()
+    }
+
+    private fun isEtaSummaryField(raw: String): Boolean {
+        if (raw.isBlank()) return false
+        val norm = normalizeForMatch(raw)
+        val hasClockOrDuration = CLOCK_ETA_REGEX.containsMatchIn(norm) ||
+            DURATION_HM_REGEX.containsMatchIn(norm) ||
+            DURATION_MIN_REGEX.containsMatchIn(norm)
+        return hasClockOrDuration && !PURE_DISTANCE_ONLY_REGEX.matches(norm)
+    }
+
+    private fun cleanStreetDisplayText(raw: String): String {
+        if (raw.isBlank()) return ""
+        val firstChunk = raw.split('\n', '•', '|')
+            .map { it.trim() }
+            .firstOrNull { it.isNotEmpty() && !PURE_DISTANCE_ONLY_REGEX.matches(it) }
+            ?: raw.trim()
+        return LEADING_DISTANCE_PREFIX_REGEX.replace(firstChunk, "").trim().ifBlank { firstChunk }
     }
 
     fun isAmbientSummaryOnly(
@@ -248,19 +266,23 @@ object GoogleMapsNotificationParser {
             textLines = textLines.map { it.trim() }.filter { it.isNotEmpty() }
         )
 
-        // Prioridade de distância da próxima manobra:
-        // 1) campo exclusivamente de distância (ex: title "300 m")
-        // 2) distância fora de parênteses de referência (ex: evita "(à direita em 950 m)")
-        // 3) texto completo na ordem title -> bigText -> text -> textLines
-        val parsedTurnDist = parseDistanceMeters(cleanTitle)
-            ?: parseDistanceMeters(stripParentheticalHints(cleanBigText))
-            ?: parseDistanceMeters(stripParentheticalHints(cleanText))
-            ?: parseDistanceMeters(cleanBigText)
-            ?: parseDistanceMeters(cleanText)
+        // Next-maneuver distance priority:
+        // 1) pure distance field (e.g., title "300 m") or non-ETA title
+        // 2) distance outside parenthetical hints (avoids "(right in 950 m)")
+        // 3) full text fallback in title -> bigText -> text -> textLines order
+        val titleForTurnDist = if (isEtaSummaryField(cleanTitle)) "" else cleanTitle
+        val bigTextForTurnDist = if (isEtaSummaryField(cleanBigText)) "" else cleanBigText
+        val textForTurnDist = if (isEtaSummaryField(cleanText)) "" else cleanText
+
+        val parsedTurnDist = parseDistanceMeters(titleForTurnDist)
+            ?: parseDistanceMeters(stripParentheticalHints(bigTextForTurnDist))
+            ?: parseDistanceMeters(stripParentheticalHints(textForTurnDist))
+            ?: parseDistanceMeters(bigTextForTurnDist)
+            ?: parseDistanceMeters(textForTurnDist)
             ?: parseDistanceMeters(cleanLines)
 
         val instructionParts = listOf(cleanBigText, cleanText, cleanTitle, cleanLines)
-            .filter { it.isNotEmpty() && !PURE_DISTANCE_ONLY_REGEX.matches(it) }
+            .filter { it.isNotEmpty() && !PURE_DISTANCE_ONLY_REGEX.matches(it) && !isEtaSummaryField(it) }
         val maneuverSourceRaw = if (instructionParts.isNotEmpty()) {
             instructionParts.joinToString("\n")
         } else {
@@ -268,7 +290,9 @@ object GoogleMapsNotificationParser {
         }
         val maneuverSourceNorm = normalizeForMatch(maneuverSourceRaw)
 
-        val detectedManeuver = iconManeuverCode ?: detectSolidManeuver(maneuverSourceNorm, roundaboutCounterClockwise)
+        // Explicit text instruction takes precedence over icon/bitmap guesswork
+        val textManeuver = detectSolidManeuver(maneuverSourceNorm, roundaboutCounterClockwise)
+        val detectedManeuver = textManeuver ?: iconManeuverCode
         val isExplicitArrival = isExplicitArrivalPhrase(maneuverSourceNorm, parsedTurnDist, subInfo.totalDistanceMeters, detectedManeuver)
 
         val isRerouting = detectedManeuver == BajajProtocol.ARROW_WRONG_WAY && (
@@ -295,20 +319,10 @@ object GoogleMapsNotificationParser {
 
         val resolvedSolidManeuver = when {
             isExplicitArrival -> BajajProtocol.ARROW_DESTINATION_SOLID
-            detectedManeuver != null -> {
-                // Se a próxima curva for detectada a até 3 km (3000 m), já exibe a seta da manobra
-                // para que o motociclista se prepare com antecedência no painel.
-                // Acima de 3 km em reta longa, mantém "Siga em frente" (ARROW_STRAIGHT_SOLID).
-                if (detectedManeuver != BajajProtocol.ARROW_STRAIGHT_SOLID && resolvedTurnDist > 3000) {
-                    BajajProtocol.ARROW_STRAIGHT_SOLID
-                } else {
-                    detectedManeuver
-                }
-            }
+            detectedManeuver != null -> detectedManeuver
             else -> {
                 // If Maps sent no new instruction (e.g. only street name on long straight):
-                // Dentro de 3 km (3000 m) com contagem decrescente, exibe a curva para antecipar a manobra.
-                // Acima de 3 km ou se a curva anterior já passou, a manobra é seguir reto (ARROW_STRAIGHT_SOLID).
+                // Keep previous curve maneuver if distance is still decreasing within 3 km
                 if (fallbackSolidManeuver != null && parsedTurnDist != null &&
                     fallbackTurnDistanceMeters != null && parsedTurnDist <= fallbackTurnDistanceMeters &&
                     parsedTurnDist <= 3000
@@ -362,18 +376,18 @@ object GoogleMapsNotificationParser {
         val streetCandidate = when {
             isExplicitArrival -> {
                 val cand = when {
-                    cleanBigText.isNotEmpty() && !PURE_DISTANCE_ONLY_REGEX.matches(cleanBigText) -> cleanBigText
-                    cleanText.isNotEmpty() && !PURE_DISTANCE_ONLY_REGEX.matches(cleanText) -> cleanText
-                    cleanTitle.isNotEmpty() && !PURE_DISTANCE_ONLY_REGEX.matches(cleanTitle) -> cleanTitle
+                    cleanBigText.isNotEmpty() && !PURE_DISTANCE_ONLY_REGEX.matches(cleanBigText) -> cleanStreetDisplayText(cleanBigText)
+                    cleanText.isNotEmpty() && !PURE_DISTANCE_ONLY_REGEX.matches(cleanText) -> cleanStreetDisplayText(cleanText)
+                    cleanTitle.isNotEmpty() && !PURE_DISTANCE_ONLY_REGEX.matches(cleanTitle) -> cleanStreetDisplayText(cleanTitle)
                     else -> "Você chegou ao destino"
                 }
                 cand
             }
-            cleanBigText.isNotEmpty() && !PURE_DISTANCE_ONLY_REGEX.matches(cleanBigText) -> cleanBigText
-            cleanText.isNotEmpty() && !PURE_DISTANCE_ONLY_REGEX.matches(cleanText) -> cleanText
-            cleanTitle.isNotEmpty() && !PURE_DISTANCE_ONLY_REGEX.matches(cleanTitle) -> cleanTitle
-            cleanLines.isNotEmpty() -> cleanLines
-            cleanTitle.isNotEmpty() -> cleanTitle
+            cleanBigText.isNotEmpty() && !PURE_DISTANCE_ONLY_REGEX.matches(cleanBigText) && !isEtaSummaryField(cleanBigText) -> cleanStreetDisplayText(cleanBigText)
+            cleanText.isNotEmpty() && !PURE_DISTANCE_ONLY_REGEX.matches(cleanText) && !isEtaSummaryField(cleanText) -> cleanStreetDisplayText(cleanText)
+            cleanTitle.isNotEmpty() && !PURE_DISTANCE_ONLY_REGEX.matches(cleanTitle) && !isEtaSummaryField(cleanTitle) -> cleanStreetDisplayText(cleanTitle)
+            cleanLines.isNotEmpty() -> cleanStreetDisplayText(cleanLines)
+            cleanTitle.isNotEmpty() -> cleanStreetDisplayText(cleanTitle)
             else -> provider.displayName
         }
 

@@ -116,6 +116,9 @@ class BajajBleManager(
 
     private var heartbeatCounter = 0
     private var currentBattery = 85
+    private var isBatteryCharging = false
+    private var chargingAnimStep = 0
+    private var lastChargingStepMs = 0L
     private var currentSignal = 4
     private var isHeadsetConnected = false
     private var currentVolumeLevel = 10
@@ -245,6 +248,8 @@ class BajajBleManager(
     fun getStatusMessage(): String = lastStatusMessage
 
     fun getCurrentBattery(): Int = currentBattery
+
+    fun isBatteryCharging(): Boolean = isBatteryCharging
 
     fun getCurrentSignal(): Int = currentSignal
 
@@ -588,13 +593,11 @@ class BajajBleManager(
             val action = intent?.action ?: return
             when (action) {
                 Intent.ACTION_BATTERY_CHANGED -> {
-                    val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
-                    val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
-                    if (level >= 0 && scale > 0) {
-                        val nextBatt = (level * 100 / scale.toFloat()).toInt().coerceIn(0, 100)
-                        if (nextBatt != currentBattery) {
-                            currentBattery = nextBatt
-                            notifyDataRefreshedIfChanged()
+                    val stateChanged = updateBatteryFromIntent(intent)
+                    if (stateChanged) {
+                        notifyDataRefreshedIfChanged()
+                        if (isConnected()) {
+                            sendPhoneStatus()
                         }
                     }
                 }
@@ -708,15 +711,34 @@ class BajajBleManager(
         }
     }
 
+    private fun updateBatteryFromIntent(batteryStatus: Intent?): Boolean {
+        if (batteryStatus == null) return false
+        var changed = false
+        val level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+        val scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+        if (level >= 0 && scale > 0) {
+            val nextBatt = (level * 100 / scale.toFloat()).toInt().coerceIn(0, 100)
+            if (nextBatt != currentBattery) {
+                currentBattery = nextBatt
+                changed = true
+            }
+        }
+        val status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+        val nextCharging = status == BatteryManager.BATTERY_STATUS_CHARGING
+        if (nextCharging != isBatteryCharging) {
+            isBatteryCharging = nextCharging
+            chargingAnimStep = 0
+            lastChargingStepMs = 0L
+            changed = true
+        }
+        return changed
+    }
+
     private fun readRealBattery() {
         try {
             val ifilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
             val batteryStatus = context.registerReceiver(null, ifilter)
-            val level = batteryStatus?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
-            val scale = batteryStatus?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
-            if (level >= 0 && scale > 0) {
-                currentBattery = (level * 100 / scale.toFloat()).toInt().coerceIn(0, 100)
-            }
+            updateBatteryFromIntent(batteryStatus)
             notifyDataRefreshedIfChanged()
         } catch (e: Exception) {
             Log.e(TAG, "Erro ao ler bateria", e)
@@ -1745,6 +1767,20 @@ class BajajBleManager(
         currentCallerName = caller
         heartbeatCounter = (heartbeatCounter + 1) % 256
 
+        val batteryBarsOverride = if (isBatteryCharging) {
+            val baseBars = BajajProtocol.batteryPercentToBars(currentBattery)
+            val startBar = if (baseBars >= 4) 3 else baseBars
+            val span = (4 - startBar) + 1
+            val now = System.currentTimeMillis()
+            if (now - lastChargingStepMs >= 800L) {
+                chargingAnimStep = (chargingAnimStep + 1) % span
+                lastChargingStepMs = now
+            }
+            startBar + (chargingAnimStep % span)
+        } else {
+            null
+        }
+
         val packet = BajajProtocol.createPhoneStatusPacket(
             batteryPercent = currentBattery,
             signalLevel = currentSignal,
@@ -1752,7 +1788,8 @@ class BajajBleManager(
             isHeadsetConnected = isHeadsetConnected,
             volumeLevel = currentVolumeLevel,
             callState = callState,
-            callerName = caller
+            callerName = caller,
+            batteryBarsOverride = batteryBarsOverride
         )
         enqueueWrite(CHAR_STATUS, packet, replacePending = true)
         notifyDataRefreshedIfChanged()
