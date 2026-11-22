@@ -24,20 +24,17 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android Build Tools & Platforms
+      - name: Install Android Build Tools & Platform
         run: |
-          sdkmanager "platforms;android-34" "build-tools;34.0.0"
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "build-tools;34.0.0"
 
       - name: Install Kotlin Compiler
         run: |
-          sudo snap install --classic --channel=1.9/stable kotlinc || {
-            curl -sSL https://github.com/JetBrains/kotlin/releases/download/v1.9.22/kotlin-compiler-1.9.22.zip -o kotlinc.zip
-            unzip -q kotlinc.zip -d /tmp/kotlinc
-            echo "/tmp/kotlinc/kotlinc/bin" >> $GITHUB_PATH
-          }
+          curl -sSL https://github.com/JetBrains/kotlin/releases/download/v1.9.22/kotlin-compiler-1.9.22.zip -o kotlinc.zip
+          unzip -q kotlinc.zip -d /tmp/kotlinc
+          echo "/tmp/kotlinc/kotlinc/bin" >> $GITHUB_PATH
+          echo "KOTLIN_LIB=/tmp/kotlinc/kotlinc/lib/kotlin-stdlib.jar" >> $GITHUB_ENV
 
       - name: Create Debug Keystore
         run: |
