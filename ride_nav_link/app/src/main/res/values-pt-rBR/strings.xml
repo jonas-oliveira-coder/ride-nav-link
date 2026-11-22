@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Details -->
+    <string name="app_name">RideNav Link</string>
+    <string name="notification_channel_name">Serviço RideNav</string>
+    <string name="notification_channel_desc">Exibe o status de conexão com o painel da moto</string>
+
+    <!-- Navigation Status -->
+    <string name="nav_disconnected">Desconectado do painel</string>
+    <string name="nav_waiting">Aguardando %1$s…</string>
+    <string name="nav_connected">Conectado a %1$s</string>
+    <string name="nav_scanning">Procurando painéis…</string>
+
+    <!-- Phone & Call -->
+    <string name="call_incoming">Chamada recebida</string>
+    <string name="call_active">Em ligação</string>
+    <string name="call_dialing">Discando…</string>
+    <string name="call_ended">Chamada encerrada</string>
+    <string name="call_missed">Chamada perdida</string>
+
+    <!-- Media -->
+    <string name="media_playing">Tocando</string>
+    <string name="media_paused">Pausado</string>
+    <string name="media_stopped">Parado</string>
+
+    <!-- Maneuvers -->
+    <string name="maneuver_straight">Siga em frente</string>
+    <string name="maneuver_slight_left">Mantenha leve à esquerda</string>
+    <string name="maneuver_slight_right">Mantenha leve à direita</string>
+    <string name="maneuver_turn_left">Vire à esquerda</string>
+    <string name="maneuver_turn_right">Vire à direita</string>
+    <string name="maneuver_sharp_left">Curva acentuada à esquerda</string>
+    <string name="maneuver_sharp_right">Curva acentuada à direita</string>
+    <string name="maneuver_uturn_left">Faça o retorno à esquerda</string>
+    <string name="maneuver_uturn_right">Faça o retorno à direita</string>
+    <string name="maneuver_roundabout_right">Entre na rotatória</string>
+    <string name="maneuver_roundabout_left">Rotatória à esquerda</string>
+    <string name="maneuver_merge">Convergência na via</string>
+    <string name="maneuver_fork_left">Bifurcação à esquerda</string>
+    <string name="maneuver_fork_right">Bifurcação à direita</string>
+    <string name="maneuver_destination">Você chegou ao destino</string>
+    <string name="maneuver_destination_approaching">Chegando ao destino</string>
+    <string name="maneuver_wrong_way">Recalculando / contramão</string>
+    <string name="maneuver_ferry">Embarque na balsa</string>
+    <string name="maneuver_train">Balsa / trem</string>
+
+    <!-- Tabs & Sections -->
+    <string name="tab_dashboard">Painel</string>
+    <string name="tab_navigation">Navegação</string>
+    <string name="tab_settings">Configurações</string>
+
+    <!-- Buttons & Actions -->
+    <string name="btn_connect">Conectar</string>
+    <string name="btn_disconnect">Desconectar</string>
+    <string name="btn_scan">Escanear</string>
+    <string name="btn_save">Salvar</string>
+    <string name="btn_cancel">Cancelar</string>
+    <string name="btn_grant_permission">Conceder Permissão</string>
+</resources>
+
