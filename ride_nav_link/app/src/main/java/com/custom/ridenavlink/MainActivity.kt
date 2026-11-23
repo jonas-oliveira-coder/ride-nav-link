@@ -1,4 +1,4 @@
-﻿package com.custom.ridenavlink
+package com.custom.ridenavlink
 
 import android.Manifest
 import android.animation.ObjectAnimator
@@ -3633,8 +3633,8 @@ class MainActivity : Activity() {
             m.contains("left") -> BajajProtocol.ARROW_LEFT_SOLID
             m.contains("uturn") || m.contains("u-turn") -> BajajProtocol.ARROW_UTURN_LEFT_SOLID
             m.contains("roundabout") || m.contains("rotary") -> {
-                if (counterClockwise) BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
-                else BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID
+                if (counterClockwise) BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID
+                else BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
             }
             m.contains("fork") -> BajajProtocol.ARROW_FORK_RIGHT_SOLID
             m.contains("merge") -> BajajProtocol.ARROW_MERGE

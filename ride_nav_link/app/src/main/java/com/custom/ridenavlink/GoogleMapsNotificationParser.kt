@@ -1,4 +1,4 @@
-﻿package com.custom.ridenavlink
+package com.custom.ridenavlink
 
 import java.text.Normalizer
 import java.util.Locale
@@ -291,17 +291,30 @@ object GoogleMapsNotificationParser {
         val maneuverSourceNorm = normalizeForMatch(maneuverSourceRaw)
 
         val textManeuver = detectSolidManeuver(maneuverSourceNorm, roundaboutCounterClockwise)
+        val iconIsRoundabout = iconManeuverCode == BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID ||
+            iconManeuverCode == BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
+        val textIsRoundabout = textManeuver == BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID ||
+            textManeuver == BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
+        val prelimManeuver = when {
+            textIsRoundabout && !iconIsRoundabout -> textManeuver
+            textManeuver == BajajProtocol.ARROW_DESTINATION_SOLID -> BajajProtocol.ARROW_DESTINATION_SOLID
+            textManeuver == BajajProtocol.ARROW_UTURN_LEFT_SOLID ||
+                textManeuver == BajajProtocol.ARROW_UTURN_RIGHT_SOLID -> textManeuver
+            textManeuver == BajajProtocol.ARROW_SHARP_LEFT_SOLID ||
+                textManeuver == BajajProtocol.ARROW_SHARP_RIGHT_SOLID -> textManeuver
+            else -> iconManeuverCode ?: textManeuver
+        }
         val isExplicitArrival = isExplicitArrivalPhrase(
             maneuverSourceNorm,
             parsedTurnDist,
             subInfo.totalDistanceMeters,
-            textManeuver ?: iconManeuverCode
+            prelimManeuver
         )
         val isExplicitReroute = textManeuver == BajajProtocol.ARROW_WRONG_WAY
         val detectedManeuver = when {
             isExplicitArrival -> BajajProtocol.ARROW_DESTINATION_SOLID
             isExplicitReroute -> BajajProtocol.ARROW_WRONG_WAY
-            else -> iconManeuverCode ?: textManeuver
+            else -> prelimManeuver
         }
 
         val isRerouting = detectedManeuver == BajajProtocol.ARROW_WRONG_WAY && (
@@ -371,8 +384,8 @@ object GoogleMapsNotificationParser {
                 parseRoundaboutExit(normalizeForMatch(cleanSubText), inferIfMissing = false)
             }
             when {
-                iconRoundaboutExit in 1..7 -> iconRoundaboutExit
                 explicitExit in 1..7 -> explicitExit
+                iconRoundaboutExit in 1..7 -> iconRoundaboutExit
                 fallbackSolidManeuver == resolvedSolidManeuver && fallbackRoundaboutExit in 1..7 -> fallbackRoundaboutExit
                 else -> {
                     val inferred = parseRoundaboutExit(maneuverSourceNorm, inferIfMissing = true)
@@ -455,9 +468,14 @@ object GoogleMapsNotificationParser {
 
         val positionalArrivalPhrases = listOf(
             "o destino esta",
+            "o destino estara",
+            "destino estara",
             "o seu destino esta",
+            "o seu destino estara",
             "seu destino esta",
             "seu destino estara",
+            "o destino fica",
+            "destino fica",
             "o seu destino fica",
             "seu destino fica",
             "destino a direita",
@@ -467,13 +485,15 @@ object GoogleMapsNotificationParser {
             "destination is ahead",
             "your destination is"
         )
-        if ((parsedTurnDist == null || parsedTurnDist <= 60) && positionalArrivalPhrases.any { norm.contains(it) }) {
+        if ((parsedTurnDist == null || parsedTurnDist <= 60) &&
+            (positionalArrivalPhrases.any { norm.contains(it) } || "\\bchegou\\b".toRegex().containsMatchIn(norm))
+        ) {
             return true
         }
 
         return detectedManeuver == BajajProtocol.ARROW_DESTINATION_SOLID &&
-            (parsedTurnDist == null || parsedTurnDist <= 40) &&
-            (totalDist == null || totalDist <= 60)
+            (parsedTurnDist == null || parsedTurnDist <= 50) &&
+            (totalDist == null || totalDist <= 80)
     }
 
     fun parseDistanceMeters(raw: String): Int? {
@@ -684,12 +704,11 @@ object GoogleMapsNotificationParser {
                 text.contains("roundabout") ||
                 text.contains("traffic circle") -> {
                 val explicitClockwise = text.contains("horario") ||
-                    text.contains("mao inglesa") ||
-                    text.contains("roundabout right")
+                    text.contains("mao inglesa")
                 if (explicitClockwise || !defaultCounterClockwise) {
-                    BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID
-                } else {
                     BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
+                } else {
+                    BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID
                 }
             }
 

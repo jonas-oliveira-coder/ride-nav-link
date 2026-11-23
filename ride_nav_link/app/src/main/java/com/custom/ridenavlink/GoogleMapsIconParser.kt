@@ -1,4 +1,4 @@
-﻿package com.custom.ridenavlink
+package com.custom.ridenavlink
 
 import android.app.Notification
 import android.content.Context
@@ -90,11 +90,11 @@ object GoogleMapsIconParser {
                 entryName.contains("7") || entryName.contains("seventh") -> 7
                 else -> 0
             }
-            val explicitClockwise = entryName.contains("cw") || entryName.contains("right") || entryName.contains("horario")
+            val explicitClockwise = entryName.contains("cw") || entryName.contains("horario")
             val code = if (explicitClockwise || !counterClockwise) {
-                BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID
-            } else {
                 BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
+            } else {
+                BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID
             }
             return ParsedIconManeuver(
                 maneuverCode = code,
@@ -195,151 +195,452 @@ object GoogleMapsIconParser {
         val h = bitmap.height
         if (w < 8 || h < 8) return null
 
-        var sumX = 0L
-        var sumY = 0L
-        var count = 0
-        var minX = w
-        var maxX = 0
-        var minY = h
-        var maxY = 0
+        val step = when {
+            w > 192 -> 3
+            w > 96 -> 2
+            else -> 1
+        }
 
-        val step = if (w > 128) 4 else if (w > 64) 2 else 1
+        val gridW = (w + step - 1) / step
+        val gridH = (h + step - 1) / step
+        val alphaMask = BooleanArray(gridW * gridH)
+        var alphaCount = 0
         var totalSampled = 0
-        for (y in 0 until h step step) {
-            for (x in 0 until w step step) {
+
+        for (gy in 0 until gridH) {
+            val y = gy * step
+            for (gx in 0 until gridW) {
+                val x = gx * step
                 totalSampled++
                 val pixel = bitmap.getPixel(x, y)
                 val alpha = (pixel ushr 24) and 0xFF
                 if (alpha > 40) {
-                    sumX += x
-                    sumY += y
-                    count++
-                    if (x < minX) minX = x
-                    if (x > maxX) maxX = x
-                    if (y < minY) minY = y
-                    if (y > maxY) maxY = y
+                    alphaMask[gy * gridW + gx] = true
+                    alphaCount++
                 }
             }
         }
 
-        // Reject solid opaque square/circle backgrounds (e.g. adaptive icons without alpha cutout)
-        if (count < 15 || (totalSampled > 0 && count > totalSampled * 0.78)) return null
+        if (alphaCount < 15) return null
+
+        // If icon has an opaque background (adaptive/framed icon), extract high-contrast foreground by luminance
+        val fgMask = if (totalSampled > 0 && alphaCount > totalSampled * 0.72) {
+            extractContrastForeground(bitmap, step, gridW, gridH) ?: return null
+        } else {
+            alphaMask
+        }
+
+        var sumX = 0L
+        var sumY = 0L
+        var count = 0
+        var minX = gridW
+        var maxX = 0
+        var minY = gridH
+        var maxY = 0
+
+        for (gy in 0 until gridH) {
+            for (gx in 0 until gridW) {
+                if (fgMask[gy * gridW + gx]) {
+                    sumX += gx
+                    sumY += gy
+                    count++
+                    if (gx < minX) minX = gx
+                    if (gx > maxX) maxX = gx
+                    if (gy < minY) minY = gy
+                    if (gy > maxY) maxY = gy
+                }
+            }
+        }
+
+        if (count < 12) return null
+
+        val boxW = maxX - minX + 1
+        val boxH = maxY - minY + 1
+        if (boxW < 4 || boxH < 4) return null
 
         val cx = sumX.toDouble() / count
         val cy = sumY.toDouble() / count
-        val boxW = maxX - minX + 1
-        val boxH = maxY - minY + 1
         val midX = (minX + maxX) / 2.0
         val midY = (minY + maxY) / 2.0
 
-        val centerRadius = boxW * 0.16
-        val ringInnerRadius = boxW * 0.20
-        val ringOuterRadius = boxW * 0.44
+        // 1. Roundabout ring search: handles off-center rings caused by side exits or bottom entry stems
+        detectRoundaboutFromMask(fgMask, gridW, minX, maxX, minY, maxY, counterClockwise)?.let {
+            return it
+        }
 
-        var centerCorePixels = 0
-        var ringPixels = 0
-        var exitTopPixels = 0
-        var exitRightPixels = 0
-        var exitBottomPixels = 0
-        var exitLeftPixels = 0
+        val relCx = (cx - midX) / (boxW / 2.0)
 
-        for (y in minY..maxY step step) {
-            for (x in minX..maxX step step) {
-                val pixel = bitmap.getPixel(x, y)
+        // 2. Check U-turn (tall arch at top + two vertical legs on left and right)
+        detectUTurnFromMask(fgMask, gridW, minX, maxX, minY, maxY, cx, cy)?.let {
+            return it
+        }
+
+        // 3. Directional left/right analysis using arrowhead tip Y position (avoids confusing 90° turns with sharp turns)
+        var leftPixels = 0
+        var rightPixels = 0
+        val leftBound = minX + boxW * 0.32
+        val rightBound = maxX - boxW * 0.32
+
+        for (gy in minY..maxY) {
+            for (gx in minX..maxX) {
+                if (!fgMask[gy * gridW + gx]) continue
+                if (gx <= leftBound) leftPixels++
+                if (gx >= rightBound) rightPixels++
+            }
+        }
+
+        if (rightPixels > leftPixels * 1.35) {
+            val tipStartX = (maxX - boxW * 0.28).toInt().coerceIn(minX, maxX)
+            val tipAvgNormY = averageNormYInXRange(fgMask, gridW, tipStartX, maxX, minY, maxY)
+            val code = when {
+                tipAvgNormY != null && tipAvgNormY < 0.30 -> BajajProtocol.ARROW_SLIGHT_RIGHT_SOLID
+                tipAvgNormY != null && tipAvgNormY > 0.58 -> BajajProtocol.ARROW_SHARP_RIGHT_SOLID
+                else -> BajajProtocol.ARROW_RIGHT_SOLID
+            }
+            return ParsedIconManeuver(maneuverCode = code, confidence = "bitmap:right")
+        }
+
+        if (leftPixels > rightPixels * 1.35) {
+            val tipEndX = (minX + boxW * 0.28).toInt().coerceIn(minX, maxX)
+            val tipAvgNormY = averageNormYInXRange(fgMask, gridW, minX, tipEndX, minY, maxY)
+            val code = when {
+                tipAvgNormY != null && tipAvgNormY < 0.30 -> BajajProtocol.ARROW_SLIGHT_LEFT_SOLID
+                tipAvgNormY != null && tipAvgNormY > 0.58 -> BajajProtocol.ARROW_SHARP_LEFT_SOLID
+                else -> BajajProtocol.ARROW_LEFT_SOLID
+            }
+            return ParsedIconManeuver(maneuverCode = code, confidence = "bitmap:left")
+        }
+
+        // 4. Symmetric vertical shapes: distinguish Destination Pin vs Straight Arrow
+        if (abs(relCx) < 0.28) {
+            if (isDestinationPinShape(fgMask, gridW, minX, maxX, minY, maxY)) {
+                return ParsedIconManeuver(
+                    maneuverCode = BajajProtocol.ARROW_DESTINATION_SOLID,
+                    confidence = "bitmap:destination"
+                )
+            }
+            val topZone = minY + (boxH * 0.32)
+            val bottomZone = maxY - (boxH * 0.32)
+            var topPixels = 0
+            var bottomPixels = 0
+            for (gy in minY..maxY) {
+                for (gx in minX..maxX) {
+                    if (!fgMask[gy * gridW + gx]) continue
+                    if (gy <= topZone) topPixels++
+                    if (gy >= bottomZone) bottomPixels++
+                }
+            }
+            if (topPixels > bottomPixels * 1.2) {
+                return ParsedIconManeuver(
+                    maneuverCode = BajajProtocol.ARROW_STRAIGHT_SOLID,
+                    confidence = "bitmap:straight"
+                )
+            }
+        }
+
+        return null
+    }
+
+    private fun extractContrastForeground(
+        bitmap: Bitmap,
+        step: Int,
+        gridW: Int,
+        gridH: Int
+    ): BooleanArray? {
+        val edgeLumas = mutableListOf<Int>()
+        for (gx in 0 until gridW) {
+            edgeLumas.add(pixelLuma(bitmap.getPixel(gx * step, 0)))
+            edgeLumas.add(pixelLuma(bitmap.getPixel(gx * step, (gridH - 1) * step)))
+        }
+        val bgLuma = edgeLumas.sorted()[edgeLumas.size / 2]
+        val mask = BooleanArray(gridW * gridH)
+        var fgCount = 0
+        for (gy in 0 until gridH) {
+            val y = gy * step
+            for (gx in 0 until gridW) {
+                val pixel = bitmap.getPixel(gx * step, y)
                 val alpha = (pixel ushr 24) and 0xFF
-                if (alpha > 40) {
-                    val dx = x - midX
-                    val dy = y - midY
-                    val dist = sqrt(dx * dx + dy * dy)
-                    if (dist < centerRadius) {
-                        centerCorePixels++
-                    } else if (dist in ringInnerRadius..ringOuterRadius) {
-                        ringPixels++
-                    } else if (dist > ringOuterRadius) {
-                        val angleDeg = (Math.toDegrees(atan2(dx, -dy)) + 360) % 360
-                        when (angleDeg) {
-                            in 315.0..360.0, in 0.0..45.0 -> exitTopPixels++
-                            in 45.0..135.0 -> exitRightPixels++
-                            in 135.0..225.0 -> exitBottomPixels++
-                            in 225.0..315.0 -> exitLeftPixels++
+                if (alpha > 40 && abs(pixelLuma(pixel) - bgLuma) >= 55) {
+                    mask[gy * gridW + gx] = true
+                    fgCount++
+                }
+            }
+        }
+        val total = gridW * gridH
+        return if (fgCount in 15..(total * 0.65).toInt()) mask else null
+    }
+
+    private fun pixelLuma(pixel: Int): Int {
+        val r = (pixel shr 16) and 0xFF
+        val g = (pixel shr 8) and 0xFF
+        val b = pixel and 0xFF
+        return (r * 299 + g * 587 + b * 114) / 1000
+    }
+
+    private fun detectRoundaboutFromMask(
+        fgMask: BooleanArray,
+        gridW: Int,
+        minX: Int,
+        maxX: Int,
+        minY: Int,
+        maxY: Int,
+        counterClockwise: Boolean
+    ): ParsedIconManeuver? {
+        val boxW = maxX - minX + 1
+        val boxH = maxY - minY + 1
+        val baseSize = minOf(boxW, boxH).toDouble()
+        if (baseSize < 8.0) return null
+
+        val midX = (minX + maxX) / 2.0
+        val midY = (minY + maxY) / 2.0
+
+        var bestScore = -1.0
+        var bestCx = midX
+        var bestCy = midY
+        var bestR = baseSize * 0.28
+
+        val centerOffsets = doubleArrayOf(-0.18, -0.09, 0.0, 0.09, 0.18)
+        val radiusFractions = doubleArrayOf(0.22, 0.28, 0.34)
+
+        for (ox in centerOffsets) {
+            val candCx = midX + ox * boxW
+            for (oy in centerOffsets) {
+                val candCy = midY + oy * boxH
+                for (rf in radiusFractions) {
+                    val r = baseSize * rf
+                    val innerR = r * 0.52
+                    val ringMinR = r * 0.72
+                    val ringMaxR = r * 1.28
+
+                    var coreHit = 0
+                    var coreTotal = 0
+                    var ringHit = 0
+                    val octantHits = IntArray(8)
+
+                    val y0 = (candCy - ringMaxR).toInt().coerceAtLeast(minY)
+                    val y1 = (candCy + ringMaxR).toInt().coerceAtMost(maxY)
+                    val x0 = (candCx - ringMaxR).toInt().coerceAtLeast(minX)
+                    val x1 = (candCx + ringMaxR).toInt().coerceAtMost(maxX)
+
+                    for (gy in y0..y1) {
+                        for (gx in x0..x1) {
+                            val dx = gx - candCx
+                            val dy = gy - candCy
+                            val dist = sqrt(dx * dx + dy * dy)
+                            val active = fgMask[gy * gridW + gx]
+                            if (dist <= innerR) {
+                                coreTotal++
+                                if (active) coreHit++
+                            } else if (dist in ringMinR..ringMaxR && active) {
+                                ringHit++
+                                val angle = (Math.toDegrees(atan2(dx, -dy)) + 360.0) % 360.0
+                                val oct = (angle / 45.0).toInt().coerceIn(0, 7)
+                                octantHits[oct]++
+                            }
+                        }
+                    }
+
+                    if (coreTotal == 0 || ringHit < 14) continue
+                    val coreDensity = coreHit.toDouble() / coreTotal
+                    val coveredOctants = octantHits.count { it >= 2 }
+                    if (coreDensity <= 0.22 && coveredOctants >= 6) {
+                        val score = coveredOctants * 100.0 + ringHit - coreHit * 3.0
+                        if (score > bestScore) {
+                            bestScore = score
+                            bestCx = candCx
+                            bestCy = candCy
+                            bestR = r
                         }
                     }
                 }
             }
         }
 
-        val isRoundaboutAnnulus = ringPixels >= 25 && centerCorePixels <= (ringPixels * 0.35)
-        if (isRoundaboutAnnulus) {
-            val maxExitPixels = maxOf(exitTopPixels, exitRightPixels, exitBottomPixels, exitLeftPixels)
-            val inferredExit = when {
-                maxExitPixels == exitRightPixels && exitRightPixels >= 4 -> 1
-                maxExitPixels == exitTopPixels && exitTopPixels >= 4 -> 2
-                maxExitPixels == exitLeftPixels && exitLeftPixels >= 4 -> 3
-                maxExitPixels == exitBottomPixels && exitBottomPixels >= 4 -> 4
-                else -> 2
-            }
-            val code = if (counterClockwise) {
-                BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
-            } else {
-                BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID
-            }
-            return ParsedIconManeuver(
-                maneuverCode = code,
-                roundaboutExit = inferredExit,
-                isRoundabout = true,
-                confidence = "bitmap:roundabout:exit$inferredExit"
-            )
-        }
+        if (bestScore < 0.0) return null
 
-        val relCx = (cx - midX) / (boxW / 2.0)
+        val exitMinR = bestR * 1.35
+        var exitTop = 0
+        var exitRight = 0
+        var exitBottom = 0
+        var exitLeft = 0
 
-        val topZone = minY + (boxH * 0.30)
-        val bottomZone = maxY - (boxH * 0.30)
-        val leftZone = minX + (boxW * 0.30)
-        val rightZone = maxX - (boxW * 0.30)
-
-        var topPixels = 0
-        var rightPixels = 0
-        var leftPixels = 0
-        var bottomPixels = 0
-
-        for (y in minY..maxY step step) {
-            for (x in minX..maxX step step) {
-                val pixel = bitmap.getPixel(x, y)
-                if (((pixel ushr 24) and 0xFF) > 40) {
-                    if (y <= topZone) topPixels++
-                    if (y >= bottomZone) bottomPixels++
-                    if (x <= leftZone) leftPixels++
-                    if (x >= rightZone) rightPixels++
+        for (gy in minY..maxY) {
+            for (gx in minX..maxX) {
+                if (!fgMask[gy * gridW + gx]) continue
+                val dx = gx - bestCx
+                val dy = gy - bestCy
+                val dist = sqrt(dx * dx + dy * dy)
+                if (dist > exitMinR) {
+                    val angleDeg = (Math.toDegrees(atan2(dx, -dy)) + 360.0) % 360.0
+                    // Exclude the vertical entry stem directly below the ring (165..195 deg)
+                    when (angleDeg) {
+                        in 315.0..360.0, in 0.0..45.0 -> exitTop++
+                        in 45.0..135.0 -> exitRight++
+                        in 135.0..165.0, in 195.0..225.0 -> exitBottom++
+                        in 225.0..315.0 -> exitLeft++
+                    }
                 }
             }
         }
 
-        if (topPixels > bottomPixels * 1.3 && abs(relCx) < 0.28) {
-            return ParsedIconManeuver(
-                maneuverCode = BajajProtocol.ARROW_STRAIGHT_SOLID,
-                confidence = "bitmap:straight"
-            )
-        }
-
-        if (rightPixels > leftPixels * 1.4) {
-            val code = when {
-                topPixels > bottomPixels * 1.5 -> BajajProtocol.ARROW_SLIGHT_RIGHT_SOLID
-                bottomPixels > topPixels * 1.5 -> BajajProtocol.ARROW_SHARP_RIGHT_SOLID
-                else -> BajajProtocol.ARROW_RIGHT_SOLID
+        val maxExit = maxOf(exitTop, exitRight, exitBottom, exitLeft)
+        val inferredExit = if (maxExit < 3) {
+            2
+        } else if (counterClockwise) {
+            when (maxExit) {
+                exitRight -> 1
+                exitTop -> 2
+                exitLeft -> 3
+                else -> 4
             }
-            return ParsedIconManeuver(maneuverCode = code, confidence = "bitmap:right")
-        }
-
-        if (leftPixels > rightPixels * 1.4) {
-            val code = when {
-                topPixels > bottomPixels * 1.5 -> BajajProtocol.ARROW_SLIGHT_LEFT_SOLID
-                bottomPixels > topPixels * 1.5 -> BajajProtocol.ARROW_SHARP_LEFT_SOLID
-                else -> BajajProtocol.ARROW_LEFT_SOLID
+        } else {
+            when (maxExit) {
+                exitLeft -> 1
+                exitTop -> 2
+                exitRight -> 3
+                else -> 4
             }
-            return ParsedIconManeuver(maneuverCode = code, confidence = "bitmap:left")
         }
 
+        val code = if (counterClockwise) {
+            BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID
+        } else {
+            BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
+        }
+
+        return ParsedIconManeuver(
+            maneuverCode = code,
+            roundaboutExit = inferredExit,
+            isRoundabout = true,
+            confidence = "bitmap:roundabout:exit$inferredExit"
+        )
+    }
+
+    private fun detectUTurnFromMask(
+        fgMask: BooleanArray,
+        gridW: Int,
+        minX: Int,
+        maxX: Int,
+        minY: Int,
+        maxY: Int,
+        cx: Double,
+        cy: Double
+    ): ParsedIconManeuver? {
+        val boxW = maxX - minX + 1
+        val boxH = maxY - minY + 1
+        if (boxH < boxW * 0.9) return null
+
+        val midX = (minX + maxX) / 2.0
+        val topY = minY + (boxH * 0.25).toInt()
+        val lowerY0 = minY + (boxH * 0.50).toInt()
+        val lowerY1 = minY + (boxH * 0.85).toInt()
+
+        var topSpanCount = 0
+        var lowerLeftCount = 0
+        var lowerRightCount = 0
+        var lowerCenterCount = 0
+
+        for (gy in minY..topY) {
+            for (gx in minX..maxX) {
+                if (fgMask[gy * gridW + gx]) topSpanCount++
+            }
+        }
+        for (gy in lowerY0..lowerY1) {
+            for (gx in minX..maxX) {
+                if (!fgMask[gy * gridW + gx]) continue
+                when {
+                    gx < midX - boxW * 0.15 -> lowerLeftCount++
+                    gx > midX + boxW * 0.15 -> lowerRightCount++
+                    else -> lowerCenterCount++
+                }
+            }
+        }
+
+        // U-turn has an arch across the top, two distinct vertical legs below, and an empty gap between them
+        if (topSpanCount >= 6 && lowerLeftCount >= 4 && lowerRightCount >= 4 &&
+            lowerCenterCount <= minOf(lowerLeftCount, lowerRightCount) * 0.5
+        ) {
+            val code = if (cx < midX && cy > minY + boxH * 0.4) {
+                BajajProtocol.ARROW_UTURN_RIGHT_SOLID
+            } else {
+                BajajProtocol.ARROW_UTURN_LEFT_SOLID
+            }
+            return ParsedIconManeuver(maneuverCode = code, confidence = "bitmap:uturn")
+        }
         return null
+    }
+
+    private fun averageNormYInXRange(
+        fgMask: BooleanArray,
+        gridW: Int,
+        xStart: Int,
+        xEnd: Int,
+        minY: Int,
+        maxY: Int
+    ): Double? {
+        val boxH = (maxY - minY).coerceAtLeast(1)
+        var sumY = 0L
+        var count = 0
+        for (gy in minY..maxY) {
+            for (gx in xStart..xEnd) {
+                if (fgMask[gy * gridW + gx]) {
+                    sumY += (gy - minY)
+                    count++
+                }
+            }
+        }
+        if (count == 0) return null
+        return (sumY.toDouble() / count) / boxH
+    }
+
+    private fun isDestinationPinShape(
+        fgMask: BooleanArray,
+        gridW: Int,
+        minX: Int,
+        maxX: Int,
+        minY: Int,
+        maxY: Int
+    ): Boolean {
+        val boxH = maxY - minY + 1
+        val boxW = maxX - minX + 1
+        if (boxH < 6 || boxW < 5) return false
+
+        val topRowY = minY + (boxH * 0.18).toInt()
+        val midRowY = minY + (boxH * 0.45).toInt()
+        val botRowY = maxY - (boxH * 0.12).toInt().coerceAtLeast(1)
+
+        var topMinX = maxX
+        var topMaxX = minX
+        var topCount = 0
+        var midMinX = maxX
+        var midMaxX = minX
+        var botMinX = maxX
+        var botMaxX = minX
+        var botCount = 0
+
+        for (gx in minX..maxX) {
+            if (fgMask[topRowY * gridW + gx]) {
+                if (gx < topMinX) topMinX = gx
+                if (gx > topMaxX) topMaxX = gx
+                topCount++
+            }
+            if (fgMask[midRowY * gridW + gx]) {
+                if (gx < midMinX) midMinX = gx
+                if (gx > midMaxX) midMaxX = gx
+            }
+            if (fgMask[botRowY * gridW + gx]) {
+                if (gx < botMinX) botMinX = gx
+                if (gx > botMaxX) botMaxX = gx
+                botCount++
+            }
+        }
+
+        if (topCount == 0 || botCount == 0) return false
+        val topSpan = topMaxX - topMinX + 1
+        val midSpan = midMaxX - midMinX + 1
+        val botSpan = botMaxX - botMinX + 1
+
+        // A pin is wide near the top (rounded head) and tapers to a narrow point at the bottom
+        return topSpan >= boxW * 0.45 && midSpan >= boxW * 0.45 && botSpan <= topSpan * 0.55
     }
 }
