@@ -1,0 +1,4 @@
+- Inteligência angular de 7 posições (45°) para rotatórias no painel Bajaj direto do ícone do Google Maps
+- 7 novos ícones de rotatória estilo Google Maps no HUD do app + suporte multilíngue (Weblate)
+- Correção de falsos positivos de rotatória/curva fechada em curvas simples
+- Melhoria na detecção de chegada ao destino (pino no bitmap e frases em português)

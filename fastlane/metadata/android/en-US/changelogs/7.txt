@@ -1,0 +1,4 @@
+- 7-spoke angular (45°) roundabout intelligence matching the Bajaj LCD directly from Google Maps icons
+- 7 Google Maps style roundabout HUD icons + multilingual exit direction labels (Weblate ready)
+- Fixed false roundabout/sharp-turn detection on standard 90° turns
+- Improved destination arrival detection (bitmap pin shape & localized phrases)

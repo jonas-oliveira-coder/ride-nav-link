@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased] - 2026-11-23
+## [2.4.2] - 2026-11-23
 
 ### Inteligência de Rotatórias (7 posições angulares do LCD Bajaj)
 - **Mapeamento angular de 7 pontas (45° em 45°)**: o parser de bitmap do Google Maps (`GoogleMapsIconParser`) agora lê o ângulo real da seta de saída ao redor do anel da rotatória e converte diretamente para a posição `1..7` do painel LCD da moto (ex.: `1` = 135°/4h30 fechada à direita, `2` = 90°/3h direita, `3` = 45°/1h30 leve à direita, `4` = 0°/12h em frente, `5` = 315°/10h30 leve à esquerda, `6` = 270°/9h esquerda, `7` = 225°/7h30 retorno/fechada à esquerda), com espelhamento automático para mão esquerda.

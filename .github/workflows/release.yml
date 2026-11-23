@@ -68,6 +68,14 @@ jobs:
           sha256sum RideNavLink.apk > RideNavLink.apk.sha256
           echo "SHA256: $(cat RideNavLink.apk.sha256)"
 
+      - name: Extract Release Notes from CHANGELOG.md
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          awk '/^## \[/{if (found) exit; found=1} found' CHANGELOG.md > /tmp/release_notes.md
+          if [ ! -s /tmp/release_notes.md ]; then
+            echo "Release ${{ github.ref_name }}" > /tmp/release_notes.md
+          fi
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
@@ -75,6 +83,7 @@ jobs:
           files: |
             ride_nav_link/build/RideNavLink.apk
             ride_nav_link/build/RideNavLink.apk.sha256
+          body_path: /tmp/release_notes.md
           generate_release_notes: true
           draft: false
           prerelease: false
