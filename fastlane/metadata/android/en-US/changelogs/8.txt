@@ -1,0 +1,2 @@
+- Reliable destination arrival detection across all notification fields, final meters (<= 25 m), and GPS countdown
+- Ignored residual ambient Google Maps notifications so arrival triggers properly when navigation ends near destination

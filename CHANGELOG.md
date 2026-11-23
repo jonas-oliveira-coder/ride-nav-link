@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.4.3] - 2026-11-23
+
+### 🇺🇸 English
+- **Reliable destination arrival detection**:
+  - Arrival phrase checks now inspect all raw notification fields (`title`, `text`, `bigText`, `subText`, `textLines`) without discarding fields containing ETA/duration (e.g., `"0 min"`).
+  - Automatic arrival detection on the final meters (`<= 25 m` remaining or `eta == 0` with `<= 40 m`) even when Google Maps shows only the destination name/address without an explicit *"arrived"* phrase.
+  - GPS hybrid fallback now enters arrival state when total remaining distance reaches `<= 15 m`.
+  - Ignored ambient summary notifications in `hasActiveGoogleMapsNotification()` so clearing the turn-by-turn notification near the destination triggers arrival reliably.
+
+### 🇧🇷 Português (BR)
+- **Detecção confiável de chegada ao destino**:
+  - Verificação de frases de chegada agora lê todos os campos brutos da notificação (`title`, `text`, `bigText`, `subText`, `textLines`), sem descartar campos que contenham ETA/duração (ex.: `"0 min"`).
+  - Detecção automática nos metros finais (`<= 25 m` restantes ou `eta == 0` com `<= 40 m`) mesmo quando o Google Maps exibe apenas o nome/endereço do local sem a palavra *"chegou"*.
+  - Contagem regressiva por GPS no navegador híbrido agora dispara o estado de chegada quando a distância total restante atinge `<= 15 m`.
+  - Notificações residuais/ambiente do Google Maps não bloqueiam mais o disparo de chegada ao encerrar a navegação próximo ao destino.
+
 ## [2.4.2] - 2026-11-23
 
 ### 🇺🇸 English

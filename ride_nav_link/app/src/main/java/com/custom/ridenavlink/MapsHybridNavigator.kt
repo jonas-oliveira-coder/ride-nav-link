@@ -1,4 +1,4 @@
-﻿package com.custom.ridenavlink
+package com.custom.ridenavlink
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -347,7 +347,10 @@ class MapsHybridNavigator(
         traveledSinceAnchorMeters += stepMeters
 
         val newTurn = currentInterpolatedTurnMeters()
-        if (anchorSolidManeuver == BajajProtocol.ARROW_DESTINATION_SOLID && anchorTurnMeters > 0 && newTurn <= 20) {
+        val newTotal = currentInterpolatedTotalMeters(newTurn)
+        if ((anchorSolidManeuver == BajajProtocol.ARROW_DESTINATION_SOLID && anchorTurnMeters > 0 && newTurn <= 25) ||
+            (anchorTotalMeters > 0 && anchorTotalMeters <= 120 && newTotal <= 15 && newTurn <= 15)
+        ) {
             enterArrivalState(activeProvider, "Você chegou ao destino", null)
             return
         }

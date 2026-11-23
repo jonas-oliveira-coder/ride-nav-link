@@ -1,0 +1,2 @@
+- Detecção confiável de chegada ao destino (leitura de todos os campos sem descartar ETA, metros finais <= 25 m e contagem GPS)
+- Correção de notificações residuais do Google Maps que impediam o disparo de chegada ao encerrar a rota

@@ -290,11 +290,25 @@ object GoogleMapsNotificationParser {
         }
         val maneuverSourceNorm = normalizeForMatch(maneuverSourceRaw)
 
+        val fullArrivalNorm = normalizeForMatch(
+            listOf(cleanTitle, cleanText, cleanBigText, cleanSubText, cleanLines)
+                .filter { it.isNotEmpty() }
+                .joinToString(" ")
+        )
+
         val textManeuver = detectSolidManeuver(maneuverSourceNorm, roundaboutCounterClockwise)
         val iconIsRoundabout = iconManeuverCode == BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID ||
             iconManeuverCode == BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
         val textIsRoundabout = textManeuver == BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID ||
             textManeuver == BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
+        val isExplicitTurnText = textManeuver != null &&
+            textManeuver != BajajProtocol.ARROW_STRAIGHT_SOLID &&
+            textManeuver != BajajProtocol.ARROW_DESTINATION_SOLID
+        val effectiveTotalForArrival = subInfo.totalDistanceMeters ?: fallbackTotalDistanceMeters
+        val nearFinalDestination = !isExplicitTurnText &&
+            effectiveTotalForArrival != null &&
+            effectiveTotalForArrival in 0..45 &&
+            (parsedTurnDist == null || parsedTurnDist <= 45)
         val prelimManeuver = when {
             textIsRoundabout && !iconIsRoundabout -> textManeuver
             iconIsRoundabout && !textIsRoundabout && textManeuver != null -> textManeuver
@@ -303,13 +317,16 @@ object GoogleMapsNotificationParser {
                 textManeuver == BajajProtocol.ARROW_UTURN_RIGHT_SOLID -> textManeuver
             textManeuver == BajajProtocol.ARROW_SHARP_LEFT_SOLID ||
                 textManeuver == BajajProtocol.ARROW_SHARP_RIGHT_SOLID -> textManeuver
+            nearFinalDestination -> BajajProtocol.ARROW_DESTINATION_SOLID
             else -> iconManeuverCode ?: textManeuver
         }
         val isExplicitArrival = isExplicitArrivalPhrase(
-            maneuverSourceNorm,
+            fullArrivalNorm,
             parsedTurnDist,
-            subInfo.totalDistanceMeters,
-            prelimManeuver
+            effectiveTotalForArrival,
+            prelimManeuver,
+            subInfo.etaSeconds,
+            isExplicitTurnText
         )
         val isExplicitReroute = textManeuver == BajajProtocol.ARROW_WRONG_WAY
         val detectedManeuver = when {
@@ -446,58 +463,86 @@ object GoogleMapsNotificationParser {
         norm: String,
         parsedTurnDist: Int?,
         totalDist: Int?,
-        detectedManeuver: Byte?
+        detectedManeuver: Byte?,
+        etaSeconds: Int = -1,
+        isExplicitTurnText: Boolean = false
     ): Boolean {
-        if (norm.isBlank()) return false
+        if (norm.isNotBlank()) {
+            val strongArrivalPhrases = listOf(
+                "voce chegou",
+                "chegou ao destino",
+                "chegou ao seu destino",
+                "chegou a seu destino",
+                "chegou no destino",
+                "chegou no seu destino",
+                "chegou ao local",
+                "chegada ao destino",
+                "destino alcancado",
+                "destino atingido",
+                "you have arrived",
+                "you have reached",
+                "you arrived",
+                "arrived at",
+                "reached your destination",
+                "reached destination",
+                "has llegado",
+                "llegaste a tu destino",
+                "llegaste al destino",
+                "vous etes arrive",
+                "sie haben ihr ziel erreicht"
+            )
+            if (strongArrivalPhrases.any { norm.contains(it) }) {
+                return true
+            }
 
-        val strongArrivalPhrases = listOf(
-            "voce chegou",
-            "chegou ao destino",
-            "chegou ao seu destino",
-            "chegou a seu destino",
-            "chegou no destino",
-            "chegou no seu destino",
-            "chegada ao destino",
-            "destino alcancado",
-            "destino atingido",
-            "you have arrived",
-            "you have reached",
-            "arrived at",
-            "reached your destination",
-            "reached destination"
-        )
-        if ((parsedTurnDist == null || parsedTurnDist <= 60) && strongArrivalPhrases.any { norm.contains(it) }) {
-            return true
+            val positionalArrivalPhrases = listOf(
+                "o destino esta",
+                "o destino estara",
+                "destino estara",
+                "o seu destino esta",
+                "o seu destino estara",
+                "seu destino esta",
+                "seu destino estara",
+                "o destino fica",
+                "destino fica",
+                "o seu destino fica",
+                "seu destino fica",
+                "destino a direita",
+                "destino a esquerda",
+                "destino a frente",
+                "destination is on",
+                "destination is ahead",
+                "your destination is",
+                "tu destino esta",
+                "el destino esta"
+            )
+            if ((parsedTurnDist == null || parsedTurnDist <= 80) &&
+                (positionalArrivalPhrases.any { norm.contains(it) } || "\\bchegou\\b".toRegex().containsMatchIn(norm))
+            ) {
+                return true
+            }
         }
 
-        val positionalArrivalPhrases = listOf(
-            "o destino esta",
-            "o destino estara",
-            "destino estara",
-            "o seu destino esta",
-            "o seu destino estara",
-            "seu destino esta",
-            "seu destino estara",
-            "o destino fica",
-            "destino fica",
-            "o seu destino fica",
-            "seu destino fica",
-            "destino a direita",
-            "destino a esquerda",
-            "destino a frente",
-            "destination is on",
-            "destination is ahead",
-            "your destination is"
-        )
-        if ((parsedTurnDist == null || parsedTurnDist <= 60) &&
-            (positionalArrivalPhrases.any { norm.contains(it) } || "\\bchegou\\b".toRegex().containsMatchIn(norm))
+        // Destination icon/maneuver within final 50m
+        if (detectedManeuver == BajajProtocol.ARROW_DESTINATION_SOLID &&
+            (parsedTurnDist == null || parsedTurnDist <= 50) &&
+            (totalDist == null || totalDist <= 80)
         ) {
             return true
         }
 
-        return detectedManeuver == BajajProtocol.ARROW_DESTINATION_SOLID &&
-            (parsedTurnDist == null || parsedTurnDist <= 50) &&
-            (totalDist == null || totalDist <= 80)
+        // Final meters of trip with no turn instruction (Google Maps often shows only place name + 0-25m)
+        if (!isExplicitTurnText && totalDist != null && totalDist <= 25 &&
+            (parsedTurnDist == null || parsedTurnDist <= 25)
+        ) {
+            return true
+        }
+
+        if (!isExplicitTurnText && etaSeconds == 0 && totalDist != null && totalDist <= 40) {
+            return true
+        }
+
+        return false
     }
 
     fun parseDistanceMeters(raw: String): Int? {

@@ -1,4 +1,4 @@
-﻿package com.custom.ridenavlink
+package com.custom.ridenavlink
 
 import android.app.Notification
 import android.app.PendingIntent
@@ -825,7 +825,7 @@ class MapsNotificationListener : NotificationListenerService() {
 
         Log.d(
             TAG,
-            "Google Maps TBT: dist=${parsed.distanceMeters}m etd=${parsed.totalDistanceMeters}m code=${parsed.maneuverCode.toInt().toChar()} exit=${parsed.roundaboutExit} arrival=${parsed.isArrival} street='${parsed.displayStreetText}'"
+            "Google Maps TBT: dist=${parsed.distanceMeters}m etd=${parsed.totalDistanceMeters}m code=${parsed.maneuverCode.toInt().toChar()} exit=${parsed.roundaboutExit} arrival=${parsed.isArrival} street='${parsed.displayStreetText}' raw=[t='$title'|x='$text'|s='$subText'|b='$bigText'|ic='${iconManeuver?.confidence ?: "none"}']"
         )
 
         bleManager.onMapsNavigationAnchor(parsed, NavProvider.GOOGLE_MAPS)
@@ -876,10 +876,16 @@ class MapsNotificationListener : NotificationListenerService() {
                 if (active.packageName != MAPS_PACKAGE) return@any false
                 val n = active.notification ?: return@any false
                 if ((n.flags and Notification.FLAG_GROUP_SUMMARY) != 0) return@any false
-                (n.flags and Notification.FLAG_ONGOING_EVENT) != 0 ||
+                val isNavFlag = (n.flags and Notification.FLAG_ONGOING_EVENT) != 0 ||
                     (n.flags and Notification.FLAG_NO_CLEAR) != 0 ||
                     (n.flags and Notification.FLAG_FOREGROUND_SERVICE) != 0 ||
                     n.category == Notification.CATEGORY_NAVIGATION
+                if (!isNavFlag) return@any false
+                val ex = n.extras ?: return@any true
+                val t = ex.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.trim().orEmpty()
+                val x = ex.getCharSequence(Notification.EXTRA_TEXT)?.toString()?.trim().orEmpty()
+                val b = ex.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()?.trim().orEmpty()
+                !GoogleMapsNotificationParser.isAmbientSummaryOnly(t, x, b)
             } == true
         } catch (_: Exception) {
             false
