@@ -1,4 +1,4 @@
-﻿# RideNav Link
+# RideNav Link
 
 > **Aviso de Compatibilidade e Independência:**  
 > Aplicativo independente compatível com motocicletas Bajaj Dominar e Pulsar equipadas com painel Bluetooth. Não é um produto oficial e não possui vínculo com a Bajaj Auto.

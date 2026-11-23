@@ -1,4 +1,4 @@
-﻿# RideNav Link
+# RideNav Link
 
 > **Compatibility and Independence Disclaimer:**  
 > Independent application compatible with Bajaj Dominar and Pulsar motorcycles equipped with Bluetooth LCD dash. It is not an official product and is not affiliated with Bajaj Auto.
