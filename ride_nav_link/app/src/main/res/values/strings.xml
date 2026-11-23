@@ -35,6 +35,13 @@
     <string name="maneuver_uturn_right">Make a U-turn (right)</string>
     <string name="maneuver_roundabout_right">Enter roundabout</string>
     <string name="maneuver_roundabout_left">Roundabout (left)</string>
+    <string name="roundabout_dir_1">Sharp right</string>
+    <string name="roundabout_dir_2">Exit right</string>
+    <string name="roundabout_dir_3">Slight right</string>
+    <string name="roundabout_dir_4">Go straight</string>
+    <string name="roundabout_dir_5">Slight left</string>
+    <string name="roundabout_dir_6">Exit left</string>
+    <string name="roundabout_dir_7">U-turn / sharp left</string>
     <string name="maneuver_merge">Merge ahead</string>
     <string name="maneuver_fork_left">Keep left at the fork</string>
     <string name="maneuver_fork_right">Keep right at the fork</string>

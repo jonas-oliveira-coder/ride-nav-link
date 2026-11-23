@@ -1,4 +1,4 @@
-﻿package com.custom.ridenavlink
+package com.custom.ridenavlink
 
 import java.nio.charset.StandardCharsets
 import java.text.Normalizer
@@ -29,7 +29,7 @@ object BajajProtocol {
     const val ARROW_RAMP_LEFT_BLINK: Byte = 107           // 'k'
     const val ARROW_RAMP_RIGHT_SOLID: Byte = 76           // 'L'
     const val ARROW_RAMP_RIGHT_BLINK: Byte = 108          // 'l'
-    const val ARROW_ROUNDABOUT_LEFT_SOLID: Byte = 78      // 'N'
+    const val ARROW_ROUNDABOUT_LEFT_SOLID: Byte = 78      // 'N' (anti-horário / mão direita / Brasil)
     const val ARROW_ROUNDABOUT_LEFT_BLINK: Byte = 110     // 'n'
     const val ARROW_UTURN_LEFT_SOLID: Byte = 79           // 'O'
     const val ARROW_UTURN_LEFT_BLINK: Byte = 111          // 'o'
@@ -41,7 +41,7 @@ object BajajProtocol {
     const val ARROW_FORK_RIGHT_BLINK: Byte = 114          // 'r'
     // Hardware note: The motorcycle's segmented LCD lacks dedicated segments for ferry/train.
     const val ARROW_FERRY_TRAIN_SOLID: Byte = 84          // 'T'
-    const val ARROW_ROUNDABOUT_RIGHT_SOLID: Byte = 85     // 'U' (mão direita / Brasil)
+    const val ARROW_ROUNDABOUT_RIGHT_SOLID: Byte = 85     // 'U' (horário / mão esquerda)
     const val ARROW_ROUNDABOUT_RIGHT_BLINK: Byte = 117    // 'u'
     const val ARROW_MERGE: Byte = 86                      // 'V'
     const val ARROW_KEEP_RIGHT_SOLID: Byte = 88           // 'X'
@@ -285,7 +285,7 @@ object BajajProtocol {
         val solidManeuver = toSolidCode(maneuverCode)
         val isRoundabout = solidManeuver == ARROW_ROUNDABOUT_RIGHT_SOLID ||
             solidManeuver == ARROW_ROUNDABOUT_LEFT_SOLID
-        val safeExit = if (isRoundabout && roundaboutExit !in 1..7) 2 else roundaboutExit
+        val safeExit = if (isRoundabout && roundaboutExit !in 1..7) 4 else roundaboutExit
         val clampedExit = safeExit.coerceIn(0, 7)
         packet[7] = ((clampedExit shl 4) or (resolvedHours and 0x0F)).toByte()
 

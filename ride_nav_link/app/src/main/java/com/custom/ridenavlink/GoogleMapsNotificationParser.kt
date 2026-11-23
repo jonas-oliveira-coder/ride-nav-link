@@ -297,6 +297,7 @@ object GoogleMapsNotificationParser {
             textManeuver == BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
         val prelimManeuver = when {
             textIsRoundabout && !iconIsRoundabout -> textManeuver
+            iconIsRoundabout && !textIsRoundabout && textManeuver != null -> textManeuver
             textManeuver == BajajProtocol.ARROW_DESTINATION_SOLID -> BajajProtocol.ARROW_DESTINATION_SOLID
             textManeuver == BajajProtocol.ARROW_UTURN_LEFT_SOLID ||
                 textManeuver == BajajProtocol.ARROW_UTURN_RIGHT_SOLID -> textManeuver
@@ -377,19 +378,22 @@ object GoogleMapsNotificationParser {
             resolvedSolidManeuver == BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
 
         val resolvedRoundaboutExit = if (isRoundabout) {
+            // Prioritize the geometric exit spoke (1..7) extracted from the Maps notification icon,
+            // because the Bajaj cluster LCD uses 1..7 as 45° angular positions around the ring (4 = straight),
+            // and the icon works identically across all languages.
             val primaryExit = parseRoundaboutExit(maneuverSourceNorm, inferIfMissing = false)
-            val explicitExit = if (primaryExit in 1..7) {
+            val explicitOrdinal = if (primaryExit in 1..7) {
                 primaryExit
             } else {
                 parseRoundaboutExit(normalizeForMatch(cleanSubText), inferIfMissing = false)
             }
             when {
-                explicitExit in 1..7 -> explicitExit
                 iconRoundaboutExit in 1..7 -> iconRoundaboutExit
+                explicitOrdinal in 1..7 -> mapOrdinalExitToClusterSpoke(explicitOrdinal)
                 fallbackSolidManeuver == resolvedSolidManeuver && fallbackRoundaboutExit in 1..7 -> fallbackRoundaboutExit
                 else -> {
                     val inferred = parseRoundaboutExit(maneuverSourceNorm, inferIfMissing = true)
-                    if (inferred in 1..7) inferred else 2
+                    if (inferred in 1..7) inferred else 4
                 }
             }
         } else {
@@ -625,8 +629,20 @@ object GoogleMapsNotificationParser {
         return 0
     }
 
+    fun mapOrdinalExitToClusterSpoke(ordinalExit: Int): Int {
+        // Maps standard 4-way roundabout ordinal exit (1st, 2nd, 3rd, 4th+)
+        // to Bajaj's 7-spoke angular LCD wheel (2=90° right, 4=0° straight, 6=270° left, 7=225° U-turn)
+        return when (ordinalExit) {
+            1 -> 2
+            2 -> 4
+            3 -> 6
+            in 4..7 -> 7
+            else -> 4
+        }
+    }
+
     fun parseRoundaboutExit(normText: String, inferIfMissing: Boolean = false): Int {
-        if (normText.isBlank()) return if (inferIfMissing) 2 else 0
+        if (normText.isBlank()) return if (inferIfMissing) 4 else 0
 
         val primaryText = stripParentheticalHints(normText)
         val explicitPrimary = findExplicitRoundaboutExit(primaryText)
@@ -644,15 +660,26 @@ object GoogleMapsNotificationParser {
                 clause.contains("continue straight") ||
                 clause.contains("go straight") ||
                 clause.contains("straight") ||
-                clause.contains("reto") -> 2
+                clause.contains("reto") ||
+                clause.contains("recto") ||
+                clause.contains("tout droit") ||
+                clause.contains("geradeaus") -> 4
             clause.contains("retorno") ||
                 clause.contains("meia-volta") ||
                 clause.contains("meia volta") ||
                 clause.contains("u-turn") ||
-                clause.contains("u turn") -> 4
-            clause.contains("esquerda") || clause.contains("left") -> 3
-            clause.contains("direita") || clause.contains("right") -> 1
-            else -> 2
+                clause.contains("u turn") -> 7
+            (clause.contains("leve") || clause.contains("suave") || clause.contains("slight")) &&
+                (clause.contains("direita") || clause.contains("right")) -> 3
+            (clause.contains("leve") || clause.contains("suave") || clause.contains("slight")) &&
+                (clause.contains("esquerda") || clause.contains("left")) -> 5
+            (clause.contains("acentuada") || clause.contains("fechada") || clause.contains("sharp")) &&
+                (clause.contains("direita") || clause.contains("right")) -> 1
+            (clause.contains("acentuada") || clause.contains("fechada") || clause.contains("sharp")) &&
+                (clause.contains("esquerda") || clause.contains("left")) -> 7
+            clause.contains("esquerda") || clause.contains("left") || clause.contains("izquierda") || clause.contains("gauche") || clause.contains("links") -> 6
+            clause.contains("direita") || clause.contains("right") || clause.contains("derecha") || clause.contains("droite") || clause.contains("rechts") -> 2
+            else -> 4
         }
     }
 
@@ -701,14 +728,18 @@ object GoogleMapsNotificationParser {
             text.contains("rotatoria") ||
                 text.contains("rotula") ||
                 text.contains("rotunda") ||
+                text.contains("rotonda") ||
+                text.contains("rotonde") ||
+                text.contains("rond-point") ||
+                text.contains("kreisverkehr") ||
                 text.contains("roundabout") ||
                 text.contains("traffic circle") -> {
                 val explicitClockwise = text.contains("horario") ||
                     text.contains("mao inglesa")
                 if (explicitClockwise || !defaultCounterClockwise) {
-                    BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
-                } else {
                     BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID
+                } else {
+                    BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
                 }
             }
 

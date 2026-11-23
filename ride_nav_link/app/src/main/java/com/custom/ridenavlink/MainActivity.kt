@@ -3633,8 +3633,8 @@ class MainActivity : Activity() {
             m.contains("left") -> BajajProtocol.ARROW_LEFT_SOLID
             m.contains("uturn") || m.contains("u-turn") -> BajajProtocol.ARROW_UTURN_LEFT_SOLID
             m.contains("roundabout") || m.contains("rotary") -> {
-                if (counterClockwise) BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID
-                else BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
+                if (counterClockwise) BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
+                else BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID
             }
             m.contains("fork") -> BajajProtocol.ARROW_FORK_RIGHT_SOLID
             m.contains("merge") -> BajajProtocol.ARROW_MERGE
@@ -4141,7 +4141,7 @@ class MainActivity : Activity() {
                 cachedStreet = streetLabel
                 cachedTotalDist = totalM
                 cachedEtaSec = durationSec
-                cachedExit = exit
+                cachedExit = if (exit > 0) GoogleMapsNotificationParser.mapOrdinalExitToClusterSpoke(exit) else 0
 
                 idleLayout.visibility = View.GONE
                 activeLayout.visibility = View.VISIBLE
@@ -6750,8 +6750,34 @@ class MainActivity : Activity() {
             cleanStreet
         }
 
-        val exitSuffix = if (snapshot.roundaboutExit in 1..7) " (${snapshot.roundaboutExit}ª saída)" else ""
+        val isClockwiseRoundabout = snapshot.maneuverCode == BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID ||
+            snapshot.maneuverCode == BajajProtocol.ARROW_ROUNDABOUT_RIGHT_BLINK
+        val visualPos = if (snapshot.roundaboutExit in 1..7) {
+            if (isClockwiseRoundabout) 8 - snapshot.roundaboutExit else snapshot.roundaboutExit
+        } else 4
 
+        val roundaboutDirLabel = when (visualPos) {
+            1 -> getString(R.string.roundabout_dir_1)
+            2 -> getString(R.string.roundabout_dir_2)
+            3 -> getString(R.string.roundabout_dir_3)
+            4 -> getString(R.string.roundabout_dir_4)
+            5 -> getString(R.string.roundabout_dir_5)
+            6 -> getString(R.string.roundabout_dir_6)
+            7 -> getString(R.string.roundabout_dir_7)
+            else -> ""
+        }
+        val exitSuffix = if (snapshot.roundaboutExit in 1..7 && roundaboutDirLabel.isNotBlank()) " • $roundaboutDirLabel" else ""
+
+        val roundaboutDrawable = when (visualPos) {
+            1 -> R.drawable.ic_arrow_roundabout_pos1
+            2 -> R.drawable.ic_arrow_roundabout_pos2
+            3 -> R.drawable.ic_arrow_roundabout_pos3
+            4 -> R.drawable.ic_arrow_roundabout_pos4
+            5 -> R.drawable.ic_arrow_roundabout_pos5
+            6 -> R.drawable.ic_arrow_roundabout_pos6
+            7 -> R.drawable.ic_arrow_roundabout_pos7
+            else -> R.drawable.ic_arrow_roundabout_pos4
+        }
         val (iconRes, isBlink, description) = when (snapshot.maneuverCode) {
             BajajProtocol.ARROW_STRAIGHT_SOLID -> Triple(R.drawable.ic_arrow_straight, false, "Siga em linha reta")
             BajajProtocol.ARROW_STRAIGHT_BLINK -> Triple(R.drawable.ic_arrow_straight, true, "Atenção: siga em frente")
@@ -6784,10 +6810,10 @@ class MainActivity : Activity() {
             BajajProtocol.ARROW_UTURN_LEFT_BLINK -> Triple(R.drawable.ic_arrow_uturn, true, "Faça o retorno à esquerda")
             BajajProtocol.ARROW_UTURN_RIGHT_SOLID -> Triple(R.drawable.ic_arrow_uturn_right, false, "Retorno à direita")
             BajajProtocol.ARROW_UTURN_RIGHT_BLINK -> Triple(R.drawable.ic_arrow_uturn_right, true, "Faça o retorno à direita")
-            BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID -> Triple(R.drawable.ic_arrow_roundabout, false, "Rotatória à direita$exitSuffix")
-            BajajProtocol.ARROW_ROUNDABOUT_RIGHT_BLINK -> Triple(R.drawable.ic_arrow_roundabout, true, "Entre na rotatória$exitSuffix")
-            BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID -> Triple(R.drawable.ic_arrow_roundabout_left, false, "Rotatória à esquerda$exitSuffix")
-            BajajProtocol.ARROW_ROUNDABOUT_LEFT_BLINK -> Triple(R.drawable.ic_arrow_roundabout_left, true, "Rotatória à esquerda$exitSuffix")
+            BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID -> Triple(roundaboutDrawable, false, "${getString(R.string.maneuver_roundabout_right)}$exitSuffix")
+            BajajProtocol.ARROW_ROUNDABOUT_LEFT_BLINK -> Triple(roundaboutDrawable, true, "${getString(R.string.maneuver_roundabout_right)}$exitSuffix")
+            BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID -> Triple(roundaboutDrawable, false, "${getString(R.string.maneuver_roundabout_left)}$exitSuffix")
+            BajajProtocol.ARROW_ROUNDABOUT_RIGHT_BLINK -> Triple(roundaboutDrawable, true, "${getString(R.string.maneuver_roundabout_left)}$exitSuffix")
             BajajProtocol.ARROW_FERRY_SOLID -> Triple(R.drawable.ic_ferry, false, "Travessia de balsa")
             BajajProtocol.ARROW_FERRY_BLINK -> Triple(R.drawable.ic_ferry, true, "Embarque na balsa")
             BajajProtocol.ARROW_FERRY_TRAIN_SOLID -> Triple(R.drawable.ic_train, false, "Balsa / trem")

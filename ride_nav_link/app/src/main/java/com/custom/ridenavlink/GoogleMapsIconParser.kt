@@ -81,20 +81,20 @@ object GoogleMapsIconParser {
         val isRoundabout = entryName.contains("roundabout") || entryName.contains("rotary")
         if (isRoundabout) {
             val exit = when {
-                entryName.contains("1") || entryName.contains("first") -> 1
-                entryName.contains("2") || entryName.contains("second") -> 2
-                entryName.contains("3") || entryName.contains("third") -> 3
-                entryName.contains("4") || entryName.contains("fourth") -> 4
-                entryName.contains("5") || entryName.contains("fifth") -> 5
-                entryName.contains("6") || entryName.contains("sixth") -> 6
+                entryName.contains("1") || entryName.contains("first") -> 2
+                entryName.contains("2") || entryName.contains("second") -> 4
+                entryName.contains("3") || entryName.contains("third") -> 6
+                entryName.contains("4") || entryName.contains("fourth") -> 7
+                entryName.contains("5") || entryName.contains("fifth") -> 7
+                entryName.contains("6") || entryName.contains("sixth") -> 7
                 entryName.contains("7") || entryName.contains("seventh") -> 7
                 else -> 0
             }
             val explicitClockwise = entryName.contains("cw") || entryName.contains("horario")
             val code = if (explicitClockwise || !counterClockwise) {
-                BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
-            } else {
                 BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID
+            } else {
+                BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
             }
             return ParsedIconManeuver(
                 maneuverCode = code,
@@ -440,10 +440,10 @@ object GoogleMapsIconParser {
                         }
                     }
 
-                    if (coreTotal == 0 || ringHit < 14) continue
+                    if (coreTotal == 0 || ringHit < 20) continue
                     val coreDensity = coreHit.toDouble() / coreTotal
                     val coveredOctants = octantHits.count { it >= 2 }
-                    if (coreDensity <= 0.22 && coveredOctants >= 6) {
+                    if (coreDensity <= 0.20 && coveredOctants >= 7) {
                         val score = coveredOctants * 100.0 + ringHit - coreHit * 3.0
                         if (score > bestScore) {
                             bestScore = score
@@ -458,11 +458,13 @@ object GoogleMapsIconParser {
 
         if (bestScore < 0.0) return null
 
-        val exitMinR = bestR * 1.35
-        var exitTop = 0
-        var exitRight = 0
-        var exitBottom = 0
-        var exitLeft = 0
+        // Compute 7-spoke angular position (every 45°, excluding bottom entry stem at 160°..200°)
+        // Matches Bajaj cluster LCD 7-arrow wheel:
+        // RHT ('U'): 1=135°(4:30), 2=90°(3:00), 3=45°(1:30), 4=0°(12:00), 5=315°(10:30), 6=270°(9:00), 7=225°(7:30)
+        // LHT ('N'): 1=225°(7:30), 2=270°(9:00), 3=315°(10:30), 4=0°(12:00), 5=45°(1:30), 6=90°(3:00), 7=135°(4:30)
+        val exitMinR = bestR * 1.32
+        val sectorWeight = DoubleArray(7) // index 0..6 => 135°, 90°, 45°, 0°, 315°, 270°, 225°
+        var totalExitPixels = 0
 
         for (gy in minY..maxY) {
             for (gx in minX..maxX) {
@@ -472,47 +474,53 @@ object GoogleMapsIconParser {
                 val dist = sqrt(dx * dx + dy * dy)
                 if (dist > exitMinR) {
                     val angleDeg = (Math.toDegrees(atan2(dx, -dy)) + 360.0) % 360.0
-                    // Exclude the vertical entry stem directly below the ring (165..195 deg)
-                    when (angleDeg) {
-                        in 315.0..360.0, in 0.0..45.0 -> exitTop++
-                        in 45.0..135.0 -> exitRight++
-                        in 135.0..165.0, in 195.0..225.0 -> exitBottom++
-                        in 225.0..315.0 -> exitLeft++
+                    // Exclude the vertical entry stem directly below the ring (160..200 deg)
+                    if (angleDeg in 160.0..200.0) continue
+                    val weight = (dist - exitMinR) + 1.0
+                    val sectorIdx = when {
+                        angleDeg >= 112.5 && angleDeg < 160.0 -> 0 // 135° (bottom-right)
+                        angleDeg >= 67.5 && angleDeg < 112.5 -> 1  // 90°  (right)
+                        angleDeg >= 22.5 && angleDeg < 67.5 -> 2   // 45°  (top-right)
+                        angleDeg >= 337.5 || angleDeg < 22.5 -> 3  // 0°   (straight)
+                        angleDeg >= 292.5 && angleDeg < 337.5 -> 4 // 315° (top-left)
+                        angleDeg >= 247.5 && angleDeg < 292.5 -> 5 // 270° (left)
+                        else -> 6                                   // 225° (bottom-left)
                     }
+                    sectorWeight[sectorIdx] += weight
+                    totalExitPixels++
                 }
             }
         }
 
-        val maxExit = maxOf(exitTop, exitRight, exitBottom, exitLeft)
-        val inferredExit = if (maxExit < 3) {
-            2
-        } else if (counterClockwise) {
-            when (maxExit) {
-                exitRight -> 1
-                exitTop -> 2
-                exitLeft -> 3
-                else -> 4
-            }
+        val inferredExit = if (totalExitPixels < 3) {
+            4 // default: 12:00 straight ahead
         } else {
-            when (maxExit) {
-                exitLeft -> 1
-                exitTop -> 2
-                exitRight -> 3
-                else -> 4
+            var bestSector = 3
+            var bestWeight = -1.0
+            for (i in 0..6) {
+                if (sectorWeight[i] > bestWeight) {
+                    bestWeight = sectorWeight[i]
+                    bestSector = i
+                }
+            }
+            if (counterClockwise) {
+                bestSector + 1 // 1..7 counter-clockwise from 135°
+            } else {
+                7 - bestSector // 1..7 clockwise from 225°
             }
         }
 
         val code = if (counterClockwise) {
-            BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID
-        } else {
             BajajProtocol.ARROW_ROUNDABOUT_LEFT_SOLID
+        } else {
+            BajajProtocol.ARROW_ROUNDABOUT_RIGHT_SOLID
         }
 
         return ParsedIconManeuver(
             maneuverCode = code,
             roundaboutExit = inferredExit,
             isRoundabout = true,
-            confidence = "bitmap:roundabout:exit$inferredExit"
+            confidence = "bitmap:roundabout:pos$inferredExit"
         )
     }
 

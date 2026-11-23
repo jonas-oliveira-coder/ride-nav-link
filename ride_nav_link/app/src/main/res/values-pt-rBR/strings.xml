@@ -35,6 +35,13 @@
     <string name="maneuver_uturn_right">Faça o retorno à direita</string>
     <string name="maneuver_roundabout_right">Entre na rotatória</string>
     <string name="maneuver_roundabout_left">Rotatória à esquerda</string>
+    <string name="roundabout_dir_1">Saída fechada à direita</string>
+    <string name="roundabout_dir_2">Saída à direita</string>
+    <string name="roundabout_dir_3">Saída leve à direita</string>
+    <string name="roundabout_dir_4">Siga em frente</string>
+    <string name="roundabout_dir_5">Saída leve à esquerda</string>
+    <string name="roundabout_dir_6">Saída à esquerda</string>
+    <string name="roundabout_dir_7">Retorno / saída fechada à esquerda</string>
     <string name="maneuver_merge">Convergência na via</string>
     <string name="maneuver_fork_left">Bifurcação à esquerda</string>
     <string name="maneuver_fork_right">Bifurcação à direita</string>
