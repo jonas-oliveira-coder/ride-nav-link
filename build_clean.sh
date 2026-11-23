@@ -10,6 +10,9 @@ PLATFORM="${PLATFORM:-$(find "$SDK_DIR/platforms" -name "android.jar" 2>/dev/nul
 KOTLINC="${KOTLINC:-kotlinc}"
 KOTLIN_LIB="${KOTLIN_LIB:-$(dirname "$(which kotlinc 2>/dev/null || echo ".")")/../lib/kotlin-stdlib.jar}"
 KEYSTORE="${KEYSTORE:-$HOME/.android/debug.keystore}"
+KEY_ALIAS="${KEY_ALIAS:-androiddebugkey}"
+STORE_PASS="${STORE_PASS:-android}"
+KEY_PASS="${KEY_PASS:-android}"
 
 echo "Using BUILD_TOOLS: $BUILD_TOOLS"
 echo "Using PLATFORM: $PLATFORM"
@@ -53,6 +56,11 @@ cd "$PROJECT_DIR"
 
 echo "5. Aligning and signing..."
 "$BUILD_TOOLS/zipalign" -f -p 4 build/apk/app.apk build/RideNavLink.apk
-"$BUILD_TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-pass pass:android --key-pass pass:android build/RideNavLink.apk
+"$BUILD_TOOLS/apksigner" sign \
+    --ks "$KEYSTORE" \
+    --ks-key-alias "$KEY_ALIAS" \
+    --ks-pass "pass:$STORE_PASS" \
+    --key-pass "pass:$KEY_PASS" \
+    build/RideNavLink.apk
 
 echo "Done! $PROJECT_DIR/build/RideNavLink.apk"

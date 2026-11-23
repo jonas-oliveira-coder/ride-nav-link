@@ -39,10 +39,23 @@ jobs:
           echo "BUILD_TOOLS=$ANDROID_HOME/build-tools/34.0.0" >> $GITHUB_ENV
           echo "PLATFORM=$ANDROID_HOME/platforms/android-34/android.jar" >> $GITHUB_ENV
 
-      - name: Create Debug Keystore
+      - name: Configure Signing Keystore
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_STORE_PASS: ${{ secrets.RELEASE_STORE_PASS }}
+          RELEASE_KEY_PASS: ${{ secrets.RELEASE_KEY_PASS }}
         run: |
-          mkdir -p ~/.android
-          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          if [ -n "$RELEASE_KEYSTORE_BASE64" ]; then
+            echo "$RELEASE_KEYSTORE_BASE64" | base64 -d > /tmp/release.jks
+            echo "KEYSTORE=/tmp/release.jks" >> $GITHUB_ENV
+            echo "KEY_ALIAS=$RELEASE_KEY_ALIAS" >> $GITHUB_ENV
+            echo "STORE_PASS=$RELEASE_STORE_PASS" >> $GITHUB_ENV
+            echo "KEY_PASS=$RELEASE_KEY_PASS" >> $GITHUB_ENV
+          else
+            mkdir -p ~/.android
+            keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
 
       - name: Build APK via build_clean.sh
         run: |
