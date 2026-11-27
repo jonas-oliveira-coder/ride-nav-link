@@ -18,7 +18,8 @@ data class ParsedIconManeuver(
     val maneuverCode: Byte?,
     val roundaboutExit: Int = 0,
     val isRoundabout: Boolean = false,
-    val confidence: String = "none"
+    val confidence: String = "none",
+    val confidenceScore: Float = 0f
 )
 
 object GoogleMapsIconParser {
@@ -100,30 +101,38 @@ object GoogleMapsIconParser {
                 maneuverCode = code,
                 roundaboutExit = exit,
                 isRoundabout = true,
-                confidence = "res:$entryName"
+                confidence = "res:$entryName",
+                confidenceScore = 1.0f
             )
         }
 
         val code = when {
+            entryName.contains("destination") || entryName.contains("flag") || entryName.contains("arrive") -> BajajProtocol.ARROW_DESTINATION_SOLID
+            entryName.contains("ferry_train") || entryName.contains("train") -> BajajProtocol.ARROW_FERRY_TRAIN_SOLID
+            entryName.contains("ferry") || entryName.contains("boat") -> BajajProtocol.ARROW_FERRY_SOLID
+            entryName.contains("u_turn_right") || entryName.contains("uturn_right") -> BajajProtocol.ARROW_UTURN_RIGHT_SOLID
+            entryName.contains("u_turn") || entryName.contains("uturn") -> BajajProtocol.ARROW_UTURN_LEFT_SOLID
             entryName.contains("sharp_right") || entryName.contains("sharp_right_turn") -> BajajProtocol.ARROW_SHARP_RIGHT_SOLID
             entryName.contains("slight_right") -> BajajProtocol.ARROW_SLIGHT_RIGHT_SOLID
+            entryName.contains("keep_right") -> BajajProtocol.ARROW_KEEP_RIGHT_SOLID
+            entryName.contains("fork_right") -> BajajProtocol.ARROW_FORK_RIGHT_SOLID
+            entryName.contains("ramp_right") -> BajajProtocol.ARROW_RAMP_RIGHT_SOLID
             entryName.contains("turn_right") || entryName.contains("right_turn") || entryName.contains("right") -> BajajProtocol.ARROW_RIGHT_SOLID
             entryName.contains("sharp_left") || entryName.contains("sharp_left_turn") -> BajajProtocol.ARROW_SHARP_LEFT_SOLID
             entryName.contains("slight_left") -> BajajProtocol.ARROW_SLIGHT_LEFT_SOLID
-            entryName.contains("turn_left") || entryName.contains("left_turn") || entryName.contains("left") -> BajajProtocol.ARROW_LEFT_SOLID
-            entryName.contains("straight") || entryName.contains("forward") || entryName.contains("continue") -> BajajProtocol.ARROW_STRAIGHT_SOLID
-            entryName.contains("u_turn") || entryName.contains("uturn") -> BajajProtocol.ARROW_UTURN_LEFT_SOLID
+            entryName.contains("keep_left") -> BajajProtocol.ARROW_KEEP_LEFT_SOLID
             entryName.contains("fork_left") -> BajajProtocol.ARROW_FORK_LEFT_SOLID
-            entryName.contains("fork_right") || entryName.contains("fork") -> BajajProtocol.ARROW_FORK_RIGHT_SOLID
             entryName.contains("ramp_left") -> BajajProtocol.ARROW_RAMP_LEFT_SOLID
-            entryName.contains("ramp_right") || entryName.contains("ramp") -> BajajProtocol.ARROW_RAMP_RIGHT_SOLID
+            entryName.contains("turn_left") || entryName.contains("left_turn") || entryName.contains("left") -> BajajProtocol.ARROW_LEFT_SOLID
+            entryName.contains("fork") -> BajajProtocol.ARROW_FORK_RIGHT_SOLID
+            entryName.contains("ramp") -> BajajProtocol.ARROW_RAMP_RIGHT_SOLID
             entryName.contains("merge") -> BajajProtocol.ARROW_MERGE
-            entryName.contains("destination") || entryName.contains("flag") || entryName.contains("arrive") -> BajajProtocol.ARROW_DESTINATION_SOLID
+            entryName.contains("straight") || entryName.contains("forward") || entryName.contains("continue") -> BajajProtocol.ARROW_STRAIGHT_SOLID
             else -> null
         }
 
         return if (code != null) {
-            ParsedIconManeuver(maneuverCode = code, confidence = "res:$entryName")
+            ParsedIconManeuver(maneuverCode = code, confidence = "res:$entryName", confidenceScore = 1.0f)
         } else null
     }
 
@@ -204,7 +213,10 @@ object GoogleMapsIconParser {
         val gridW = (w + step - 1) / step
         val gridH = (h + step - 1) / step
         val alphaMask = BooleanArray(gridW * gridH)
+        val primaryAlphaMask = BooleanArray(gridW * gridH)
+        val secondaryAlphaMask = BooleanArray(gridW * gridH)
         var alphaCount = 0
+        var primaryAlphaCount = 0
         var totalSampled = 0
 
         for (gy in 0 until gridH) {
@@ -214,24 +226,35 @@ object GoogleMapsIconParser {
                 totalSampled++
                 val pixel = bitmap.getPixel(x, y)
                 val alpha = (pixel ushr 24) and 0xFF
-                if (alpha > 40) {
-                    alphaMask[gy * gridW + gx] = true
+                val idx = gy * gridW + gx
+                if (alpha >= 35) {
+                    alphaMask[idx] = true
                     alphaCount++
+                    if (alpha >= 165) {
+                        primaryAlphaMask[idx] = true
+                        primaryAlphaCount++
+                    } else {
+                        secondaryAlphaMask[idx] = true
+                    }
                 }
             }
         }
 
         if (alphaCount < 15) return null
 
-        // If icon has an opaque background (adaptive/framed icon), extract high-contrast foreground by luminance
-        val fgMask = if (totalSampled > 0 && alphaCount > totalSampled * 0.72) {
-            extractContrastForeground(bitmap, step, gridW, gridH) ?: return null
+        // Extract dual-tone masks:
+        // - primaryMask: solid active route arrow
+        // - secondaryMask: faded/dimmed untaken road (Fork, Ramp, Keep, Merge)
+        val maskData: IconMaskData = if (totalSampled > 0 && alphaCount > totalSampled * 0.72) {
+            extractContrastDualMasks(bitmap, step, gridW, gridH) ?: return null
+        } else if (primaryAlphaCount >= 12) {
+            IconMaskData(gridW, gridH, primaryAlphaMask, secondaryAlphaMask)
         } else {
-            alphaMask
+            // Entire icon is uniformly semi-transparent: treat full alpha mask as primary
+            IconMaskData(gridW, gridH, alphaMask, BooleanArray(gridW * gridH))
         }
 
-        var sumX = 0L
-        var sumY = 0L
+        val fullMask = maskData.fullMask
         var count = 0
         var minX = gridW
         var maxX = 0
@@ -240,9 +263,7 @@ object GoogleMapsIconParser {
 
         for (gy in 0 until gridH) {
             for (gx in 0 until gridW) {
-                if (fgMask[gy * gridW + gx]) {
-                    sumX += gx
-                    sumY += gy
+                if (fullMask[gy * gridW + gx]) {
                     count++
                     if (gx < minX) minX = gx
                     if (gx > maxX) maxX = gx
@@ -253,121 +274,87 @@ object GoogleMapsIconParser {
         }
 
         if (count < 12) return null
-
         val boxW = maxX - minX + 1
         val boxH = maxY - minY + 1
         if (boxW < 4 || boxH < 4) return null
 
-        val cx = sumX.toDouble() / count
-        val cy = sumY.toDouble() / count
-        val midX = (minX + maxX) / 2.0
-        val midY = (minY + maxY) / 2.0
-
-        // 1. Roundabout ring search: handles off-center rings caused by side exits or bottom entry stems
-        detectRoundaboutFromMask(fgMask, gridW, minX, maxX, minY, maxY, counterClockwise)?.let {
-            return it
-        }
-
-        val relCx = (cx - midX) / (boxW / 2.0)
-
-        // 2. Check U-turn (tall arch at top + two vertical legs on left and right)
-        detectUTurnFromMask(fgMask, gridW, minX, maxX, minY, maxY, cx, cy)?.let {
-            return it
-        }
-
-        // 3. Directional left/right analysis using arrowhead tip Y position (avoids confusing 90° turns with sharp turns)
-        var leftPixels = 0
-        var rightPixels = 0
-        val leftBound = minX + boxW * 0.32
-        val rightBound = maxX - boxW * 0.32
-
-        for (gy in minY..maxY) {
-            for (gx in minX..maxX) {
-                if (!fgMask[gy * gridW + gx]) continue
-                if (gx <= leftBound) leftPixels++
-                if (gx >= rightBound) rightPixels++
+        // 1. Roundabout ring search (preserved intact, guarded against destination pin inner hole)
+        if (!IconShapeClassifier.looksLikeDestination(fullMask, gridW, gridH)) {
+            detectRoundaboutFromMask(fullMask, gridW, minX, maxX, minY, maxY, counterClockwise)?.let {
+                return it
             }
         }
 
-        if (rightPixels > leftPixels * 1.35) {
-            val tipStartX = (maxX - boxW * 0.28).toInt().coerceIn(minX, maxX)
-            val tipAvgNormY = averageNormYInXRange(fgMask, gridW, tipStartX, maxX, minY, maxY)
-            val code = when {
-                tipAvgNormY != null && tipAvgNormY < 0.30 -> BajajProtocol.ARROW_SLIGHT_RIGHT_SOLID
-                tipAvgNormY != null && tipAvgNormY > 0.58 -> BajajProtocol.ARROW_SHARP_RIGHT_SOLID
-                else -> BajajProtocol.ARROW_RIGHT_SOLID
-            }
-            return ParsedIconManeuver(maneuverCode = code, confidence = "bitmap:right")
-        }
-
-        if (leftPixels > rightPixels * 1.35) {
-            val tipEndX = (minX + boxW * 0.28).toInt().coerceIn(minX, maxX)
-            val tipAvgNormY = averageNormYInXRange(fgMask, gridW, minX, tipEndX, minY, maxY)
-            val code = when {
-                tipAvgNormY != null && tipAvgNormY < 0.30 -> BajajProtocol.ARROW_SLIGHT_LEFT_SOLID
-                tipAvgNormY != null && tipAvgNormY > 0.58 -> BajajProtocol.ARROW_SHARP_LEFT_SOLID
-                else -> BajajProtocol.ARROW_LEFT_SOLID
-            }
-            return ParsedIconManeuver(maneuverCode = code, confidence = "bitmap:left")
-        }
-
-        // 4. Symmetric vertical shapes: distinguish Destination Pin vs Straight Arrow
-        if (abs(relCx) < 0.28) {
-            if (isDestinationPinShape(fgMask, gridW, minX, maxX, minY, maxY)) {
-                return ParsedIconManeuver(
-                    maneuverCode = BajajProtocol.ARROW_DESTINATION_SOLID,
-                    confidence = "bitmap:destination"
-                )
-            }
-            val topZone = minY + (boxH * 0.32)
-            val bottomZone = maxY - (boxH * 0.32)
-            var topPixels = 0
-            var bottomPixels = 0
-            for (gy in minY..maxY) {
-                for (gx in minX..maxX) {
-                    if (!fgMask[gy * gridW + gx]) continue
-                    if (gy <= topZone) topPixels++
-                    if (gy >= bottomZone) bottomPixels++
-                }
-            }
-            if (topPixels > bottomPixels * 1.2) {
-                return ParsedIconManeuver(
-                    maneuverCode = BajajProtocol.ARROW_STRAIGHT_SOLID,
-                    confidence = "bitmap:straight"
-                )
-            }
-        }
-
-        return null
+        // 2. Unified pure-Kotlin classifier: Destination (Pin+Road / Pin), U-Turn, Dual-Tone (Fork/Ramp/Keep/Merge),
+        //    and 32x32 Template + Arrow Geometry (Straight, Slight L/R, Turn 90° L/R, Sharp 135° L/R)
+        val classified = IconShapeClassifier.classify(maskData) ?: return null
+        return ParsedIconManeuver(
+            maneuverCode = classified.maneuverCode,
+            confidence = if (classified.debugSummary.isNotBlank()) {
+                "${classified.label}(${classified.debugSummary})"
+            } else {
+                classified.label
+            },
+            confidenceScore = classified.confidenceScore
+        )
     }
 
-    private fun extractContrastForeground(
+    private fun extractContrastDualMasks(
         bitmap: Bitmap,
         step: Int,
         gridW: Int,
         gridH: Int
-    ): BooleanArray? {
+    ): IconMaskData? {
         val edgeLumas = mutableListOf<Int>()
         for (gx in 0 until gridW) {
             edgeLumas.add(pixelLuma(bitmap.getPixel(gx * step, 0)))
             edgeLumas.add(pixelLuma(bitmap.getPixel(gx * step, (gridH - 1) * step)))
         }
         val bgLuma = edgeLumas.sorted()[edgeLumas.size / 2]
-        val mask = BooleanArray(gridW * gridH)
-        var fgCount = 0
+
+        val diffs = IntArray(gridW * gridH)
+        var maxDiff = 0
         for (gy in 0 until gridH) {
             val y = gy * step
             for (gx in 0 until gridW) {
                 val pixel = bitmap.getPixel(gx * step, y)
                 val alpha = (pixel ushr 24) and 0xFF
-                if (alpha > 40 && abs(pixelLuma(pixel) - bgLuma) >= 55) {
-                    mask[gy * gridW + gx] = true
-                    fgCount++
+                if (alpha > 40) {
+                    val d = abs(pixelLuma(pixel) - bgLuma)
+                    diffs[gy * gridW + gx] = d
+                    if (d > maxDiff) maxDiff = d
                 }
             }
         }
+        if (maxDiff < 55) return null
+
+        val primaryThresh = maxOf(55, (maxDiff * 0.62).toInt())
+        val secondaryThresh = maxOf(28, (maxDiff * 0.28).toInt())
+        val primary = BooleanArray(gridW * gridH)
+        val secondary = BooleanArray(gridW * gridH)
+        var primCount = 0
+        var secCount = 0
+
+        for (i in diffs.indices) {
+            val d = diffs[i]
+            if (d >= primaryThresh) {
+                primary[i] = true
+                primCount++
+            } else if (d >= secondaryThresh) {
+                secondary[i] = true
+                secCount++
+            }
+        }
+
+        val totalFg = primCount + secCount
         val total = gridW * gridH
-        return if (fgCount in 15..(total * 0.65).toInt()) mask else null
+        if (totalFg !in 15..(total * 0.68).toInt()) return null
+        return if (primCount >= 12) {
+            IconMaskData(gridW, gridH, primary, secondary)
+        } else {
+            val combined = BooleanArray(gridW * gridH) { i -> primary[i] || secondary[i] }
+            IconMaskData(gridW, gridH, combined, BooleanArray(gridW * gridH))
+        }
     }
 
     private fun pixelLuma(pixel: Int): Int {
@@ -520,135 +507,8 @@ object GoogleMapsIconParser {
             maneuverCode = code,
             roundaboutExit = inferredExit,
             isRoundabout = true,
-            confidence = "bitmap:roundabout:pos$inferredExit"
+            confidence = "bitmap:roundabout:pos$inferredExit",
+            confidenceScore = 0.95f
         )
-    }
-
-    private fun detectUTurnFromMask(
-        fgMask: BooleanArray,
-        gridW: Int,
-        minX: Int,
-        maxX: Int,
-        minY: Int,
-        maxY: Int,
-        cx: Double,
-        cy: Double
-    ): ParsedIconManeuver? {
-        val boxW = maxX - minX + 1
-        val boxH = maxY - minY + 1
-        if (boxH < boxW * 0.9) return null
-
-        val midX = (minX + maxX) / 2.0
-        val topY = minY + (boxH * 0.25).toInt()
-        val lowerY0 = minY + (boxH * 0.50).toInt()
-        val lowerY1 = minY + (boxH * 0.85).toInt()
-
-        var topSpanCount = 0
-        var lowerLeftCount = 0
-        var lowerRightCount = 0
-        var lowerCenterCount = 0
-
-        for (gy in minY..topY) {
-            for (gx in minX..maxX) {
-                if (fgMask[gy * gridW + gx]) topSpanCount++
-            }
-        }
-        for (gy in lowerY0..lowerY1) {
-            for (gx in minX..maxX) {
-                if (!fgMask[gy * gridW + gx]) continue
-                when {
-                    gx < midX - boxW * 0.15 -> lowerLeftCount++
-                    gx > midX + boxW * 0.15 -> lowerRightCount++
-                    else -> lowerCenterCount++
-                }
-            }
-        }
-
-        // U-turn has an arch across the top, two distinct vertical legs below, and an empty gap between them
-        if (topSpanCount >= 6 && lowerLeftCount >= 4 && lowerRightCount >= 4 &&
-            lowerCenterCount <= minOf(lowerLeftCount, lowerRightCount) * 0.5
-        ) {
-            val code = if (cx < midX && cy > minY + boxH * 0.4) {
-                BajajProtocol.ARROW_UTURN_RIGHT_SOLID
-            } else {
-                BajajProtocol.ARROW_UTURN_LEFT_SOLID
-            }
-            return ParsedIconManeuver(maneuverCode = code, confidence = "bitmap:uturn")
-        }
-        return null
-    }
-
-    private fun averageNormYInXRange(
-        fgMask: BooleanArray,
-        gridW: Int,
-        xStart: Int,
-        xEnd: Int,
-        minY: Int,
-        maxY: Int
-    ): Double? {
-        val boxH = (maxY - minY).coerceAtLeast(1)
-        var sumY = 0L
-        var count = 0
-        for (gy in minY..maxY) {
-            for (gx in xStart..xEnd) {
-                if (fgMask[gy * gridW + gx]) {
-                    sumY += (gy - minY)
-                    count++
-                }
-            }
-        }
-        if (count == 0) return null
-        return (sumY.toDouble() / count) / boxH
-    }
-
-    private fun isDestinationPinShape(
-        fgMask: BooleanArray,
-        gridW: Int,
-        minX: Int,
-        maxX: Int,
-        minY: Int,
-        maxY: Int
-    ): Boolean {
-        val boxH = maxY - minY + 1
-        val boxW = maxX - minX + 1
-        if (boxH < 6 || boxW < 5) return false
-
-        val topRowY = minY + (boxH * 0.18).toInt()
-        val midRowY = minY + (boxH * 0.45).toInt()
-        val botRowY = maxY - (boxH * 0.12).toInt().coerceAtLeast(1)
-
-        var topMinX = maxX
-        var topMaxX = minX
-        var topCount = 0
-        var midMinX = maxX
-        var midMaxX = minX
-        var botMinX = maxX
-        var botMaxX = minX
-        var botCount = 0
-
-        for (gx in minX..maxX) {
-            if (fgMask[topRowY * gridW + gx]) {
-                if (gx < topMinX) topMinX = gx
-                if (gx > topMaxX) topMaxX = gx
-                topCount++
-            }
-            if (fgMask[midRowY * gridW + gx]) {
-                if (gx < midMinX) midMinX = gx
-                if (gx > midMaxX) midMaxX = gx
-            }
-            if (fgMask[botRowY * gridW + gx]) {
-                if (gx < botMinX) botMinX = gx
-                if (gx > botMaxX) botMaxX = gx
-                botCount++
-            }
-        }
-
-        if (topCount == 0 || botCount == 0) return false
-        val topSpan = topMaxX - topMinX + 1
-        val midSpan = midMaxX - midMinX + 1
-        val botSpan = botMaxX - botMinX + 1
-
-        // A pin is wide near the top (rounded head) and tapers to a narrow point at the bottom
-        return topSpan >= boxW * 0.45 && midSpan >= boxW * 0.45 && botSpan <= topSpan * 0.55
     }
 }

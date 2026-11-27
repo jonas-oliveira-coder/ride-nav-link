@@ -156,6 +156,37 @@ object BajajProtocol {
 
     fun utf8ByteLength(text: String): Int = text.toByteArray(StandardCharsets.UTF_8).size
 
+    /**
+     * Transliterates accented Latin characters and common symbols into printable US-ASCII
+     * so the Bajaj segmented LCD displays 'a', 'c', 'e', 'o', 'u' instead of blank gaps.
+     */
+    fun sanitizeForClusterLcd(text: String): String {
+        if (text.isEmpty()) return ""
+        val preReplaced = text
+            .replace('ª', 'a')
+            .replace('º', 'o')
+            .replace("°", " ")
+            .replace('–', '-')
+            .replace('—', '-')
+            .replace('•', '-')
+            .replace('‘', '\'')
+            .replace('’', '\'')
+            .replace('“', '"')
+            .replace('”', '"')
+            .replace("…", "...")
+            .replace("ß", "ss")
+            .replace("æ", "ae")
+            .replace("Æ", "AE")
+            .replace("œ", "oe")
+            .replace("Œ", "OE")
+        val normalized = Normalizer.normalize(preReplaced, Normalizer.Form.NFD)
+            .replace("\\p{InCombiningDiacriticalMarks}+".toRegex(), "")
+        return normalized
+            .replace("[^\\x20-\\x7E]".toRegex(), " ")
+            .replace("\\s+".toRegex(), " ")
+            .trim()
+    }
+
     fun truncateUtf8(text: String, maxBytes: Int): ByteArray {
         if (maxBytes <= 0 || text.isEmpty()) return ByteArray(0)
         val raw = text.toByteArray(StandardCharsets.UTF_8)
@@ -347,10 +378,7 @@ object BajajProtocol {
         packet[4] = if (callState == CALL_ACTIVE) 0 else 1
 
         if ((callState == CALL_INCOMING || callState == CALL_ACTIVE) && callerName.isNotEmpty()) {
-            val cleanName = callerName
-                .replace("[\\p{So}\\p{Cn}\\p{Cf}]".toRegex(), "")
-                .replace("\\s+".toRegex(), " ")
-                .trim()
+            val cleanName = sanitizeForClusterLcd(callerName)
             val nameBytes = truncateUtf8(cleanName, 30)
             packet[20] = nameBytes.size.toByte()
             System.arraycopy(nameBytes, 0, packet, 21, nameBytes.size)
@@ -364,11 +392,11 @@ object BajajProtocol {
         val packet = ByteArray(74)
         packet[0] = 1
 
-        val nameBytes = truncateUtf8(callerName, 32)
+        val nameBytes = truncateUtf8(sanitizeForClusterLcd(callerName), 32)
         packet[1] = nameBytes.size.toByte()
         System.arraycopy(nameBytes, 0, packet, 2, nameBytes.size)
 
-        val numBytes = truncateUtf8(callerNumber, 18)
+        val numBytes = truncateUtf8(sanitizeForClusterLcd(callerNumber), 18)
         packet[34] = numBytes.size.toByte()
         System.arraycopy(numBytes, 0, packet, 35, numBytes.size)
 
@@ -379,7 +407,7 @@ object BajajProtocol {
         val packet = ByteArray(40)
         packet[0] = alertType
 
-        val msgBytes = truncateUtf8(message.trim(), MAX_ALERT_BYTES)
+        val msgBytes = truncateUtf8(sanitizeForClusterLcd(message), MAX_ALERT_BYTES)
         packet[1] = msgBytes.size.toByte()
         System.arraycopy(msgBytes, 0, packet, 2, msgBytes.size)
 
@@ -409,15 +437,15 @@ object BajajProtocol {
         val packet = ByteArray(111)
         packet[0] = 1
 
-        val tBytes = truncateUtf8(title, 32)
+        val tBytes = truncateUtf8(sanitizeForClusterLcd(title), 32)
         packet[1] = tBytes.size.toByte()
         System.arraycopy(tBytes, 0, packet, 2, tBytes.size)
 
-        val albBytes = truncateUtf8(album, 32)
+        val albBytes = truncateUtf8(sanitizeForClusterLcd(album), 32)
         packet[34] = albBytes.size.toByte()
         System.arraycopy(albBytes, 0, packet, 35, albBytes.size)
 
-        val aBytes = truncateUtf8(artist, 32)
+        val aBytes = truncateUtf8(sanitizeForClusterLcd(artist), 32)
         packet[67] = aBytes.size.toByte()
         System.arraycopy(aBytes, 0, packet, 68, aBytes.size)
 

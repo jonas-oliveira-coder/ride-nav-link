@@ -1,133 +1,145 @@
-# RideNav Link
+<div align="center">
+  <img src="fastlane/metadata/android/pt-BR/images/icon.png" alt="RideNav Link" width="110" />
+  <h1>RideNav Link</h1>
+  <p>
+    <strong>Ponte BLE GATT nativa e 100% offline para painel digital LCD de motocicletas</strong><br />
+    Navegação Turn-by-Turn (Google Maps + GPS Híbrido) · Ligações &amp; VoIP · Telemetria · Alertas · Mídia e Comandos do Guidão
+  </p>
+
+  <p>
+    <a href="https://github.com/jonas-oliveira-coder/ride-nav-link/releases/latest"><img src="https://img.shields.io/github/v/release/jonas-oliveira-coder/ride-nav-link?label=Vers%C3%A3o&color=0b57d0" alt="Versão" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/Licen%C3%A7a-MIT-green.svg" alt="Licença: MIT" /></a>
+    <a href="https://github.com/jonas-oliveira-coder/ride-nav-link/releases/latest"><img src="https://img.shields.io/badge/Android-8.0%2B%20(API%2026)-3DDC84?logo=android&logoColor=white" alt="Android 8.0+" /></a>
+    <a href="https://hosted.weblate.org/engage/ride-nav-link/"><img src="https://hosted.weblate.org/widgets/ride-nav-link/-/svg-badge.svg" alt="Status da Tradução" /></a>
+  </p>
+
+  <p>
+    <a href="https://ko-fi.com/jonasoliveira"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Apoie no Ko-fi" height="34" /></a>
+  </p>
+
+  <p>
+    <a href="https://github.com/jonas-oliveira-coder/ride-nav-link/releases/latest"><img alt="Baixar no GitHub" src="docs/badges/get-it-on-github.png" height="60" /></a>
+    &nbsp;
+    <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/jonas-oliveira-coder/ride-nav-link"><img alt="Baixar no Obtainium" src="docs/badges/get-it-on-obtainium.png" height="60" /></a>
+  </p>
+
+  <p>
+    🇬🇧 <strong>English documentation (default):</strong> <a href="README.md">README.md</a> · <a href="COMMUNICATION_PROTOCOL_REPORT.md">BLE Protocol (EN)</a>
+  </p>
+</div>
 
 > **Aviso de Compatibilidade e Independência:**  
-> Aplicativo independente compatível com motocicletas Bajaj Dominar e Pulsar equipadas com painel Bluetooth. Não é um produto oficial e não possui vínculo com a Bajaj Auto.
-
-**RideNav Link** é um aplicativo Android nativo (Kotlin + Android SDK puro, sem dependências externas, sem React Native e sem telemetria em nuvem) que atua como ponte Bluetooth Low Energy (BLE GATT) entre o smartphone e o painel digital LCD da motocicleta.
-
-[![Translation status](https://hosted.weblate.org/widgets/ride-nav-link/-/svg-badge.svg)](https://hosted.weblate.org/engage/ride-nav-link/)
-
-> 🇬🇧 **English documentation (default):** [README.md](README.md) | [COMMUNICATION_PROTOCOL_REPORT.md](COMMUNICATION_PROTOCOL_REPORT.md)
+> Aplicativo independente e open-source compatível com motocicletas Bajaj Dominar e Pulsar equipadas com painel Bluetooth. Não é um produto oficial e não possui vínculo com a Bajaj Auto.
 
 ---
 
-## 🌍 Tradução Comunitária (Weblate)
+## ⬇️ Download e Atualizações Automáticas
 
-Ajude a traduzir o **RideNav Link** para o seu idioma!  
-O projeto está integrado ao **Hosted Weblate**:
-
-- **Página no Weblate:** [https://hosted.weblate.org/projects/ride-nav-link/](https://hosted.weblate.org/projects/ride-nav-link/)
-- Idioma padrão (fallback internacional): **Inglês** (`res/values/strings.xml`)
-- Idioma padrão no Brasil: **Português (Brasil)** (`res/values-pt-rBR/strings.xml`)
-- Seleção automática baseada no idioma do aparelho ou configurável por app no Android 13+.
-
----
-
-## ☕ Apoio e Doações
-
-O **RideNav Link** é 100% gratuito, offline e de código aberto. Se o aplicativo é útil nas suas viagens e no dia a dia com a moto, você pode apoiar o desenvolvimento e manutenção contínua:
-
-- **Ko-fi:** [https://ko-fi.com/jonasoliveira](https://ko-fi.com/jonasoliveira)
-- **PIX:** `d5c50784-cdd3-4426-8778-d65e841c8dbb`
+- **Obtainium (Recomendado — Atualizações Automáticas):**
+  1. Instale o [Obtainium](https://github.com/ImranR98/Obtainium/releases/latest) no seu Android.
+  2. Toque no botão **Get it on Obtainium** acima (ou cole `https://github.com/jonas-oliveira-coder/ride-nav-link` no Obtainium).
+  3. O Obtainium acompanha os **GitHub Releases** diretamente e atualiza o **RideNav Link** automaticamente sempre que sair uma nova versão.
+- **GitHub Releases (APK Direto):**
+  - Baixe `RideNavLink.apk` e o checksum `RideNavLink.apk.sha256` em [GitHub Releases](https://github.com/jonas-oliveira-coder/ride-nav-link/releases/latest).
+- **F-Droid:** Solicitação de inclusão aberta em [F-Droid RFP #4852](https://gitlab.com/fdroid/rfp/-/issues/4852).
 
 ---
 
 ## 📱 Capturas de Tela (Screenshots)
 
+<div align="center">
+
 | Cockpit (HUD & Telemetria) | Ações & Bancada de Testes | Perfil & Manutenção |
 |---|---|---|
 | <img src="fastlane/metadata/android/pt-BR/images/phoneScreenshots/01_cockpit.png" width="240" alt="Cockpit HUD" /> | <img src="fastlane/metadata/android/pt-BR/images/phoneScreenshots/02_actions.png" width="240" alt="Ações e Bancada" /> | <img src="fastlane/metadata/android/pt-BR/images/phoneScreenshots/03_profile.png" width="240" alt="Perfil e Manutenção" /> |
 
+</div>
+
 ---
 
-## Principais Funcionalidades
+## ✨ Principais Funcionalidades
 
-- **Navegação Turn-by-Turn via Google Maps + GPS Híbrido:**
-  - Detecta automaticamente rotas ativas do **Google Maps** via `NotificationListenerService`.
-  - Captura instruções, distâncias, ETD, ETA e saídas de rotatória (`1ª` a `7ª`) e mantém a indicação de **chegada ao destino** no painel antes de encerrar a navegação (`NAV OFF`).
-  - Refina a contagem de metros em tempo real usando `LocationManager` (`GPS_PROVIDER` com fallback para `FUSED`/`NETWORK`), mantendo o painel atualizado continuamente e alternando setas fixas para piscantes abaixo de `100 m` (e `< 40 m` na chegada).
+- **Navegação Turn-by-Turn (Google Maps + GPS Híbrido):**
+  - Captura automaticamente rotas ativas do **Google Maps** via `NotificationListenerService`.
+  - Reconhecimento visual em Kotlin puro (`IconShapeClassifier` + `GoogleMapsIconParser`) com extração dual-tone, templates 32×32, leitura angular de rotatória de 7 pontas (`1ª`–`7ª`) e detecção de destino composto.
+  - Refina a contagem de metros em tempo real via `LocationManager` (`GPS_PROVIDER` com fallback `FUSED`/`NETWORK`), pisca a seta abaixo de `100 m` e mantém o ícone de chegada piscando (`0 m`) por `25–35 s` ao chegar ou quando a notificação do Maps some.
 - **Chamadas Nativas e VoIP:**
-  - Detecta ligações recebidas, efetuadas, ativas, encerramento (`CALL_END`) e chamadas perdidas via `TelephonyCallback` / `PhoneStateListener` e notificações `CallStyle` (WhatsApp, WhatsApp Business e discador).
-  - Resolve nomes via `ContactsContract` para exibição no painel.
-- **Status do Telefone (`1 Hz`):**
-  - Envia nível de bateria (`0..4` barras), intensidade de sinal celular (`0..4`), status de intercomunicador/headset HFP, volume atual (`0..10`) e heartbeat.
+  - Detecta ligações recebidas, efetuadas, ativas, encerradas (`CALL_END`) e perdidas via `TelephonyCallback` / `PhoneStateListener` e notificações `CallStyle` (Discador, WhatsApp, WhatsApp Business).
+  - Resolve nomes via `ContactsContract` e translitera acentos para ASCII puro (`á → a`, `ç → c`) para exibição limpa no LCD.
+- **Telemetria do Telefone (`1 Hz`):**
+  - Envia barras de bateria (`0..4` com animação de carregamento), sinal celular (`0..4`), status de headset HFP, volume (`0..10`) e heartbeat.
 - **Alertas de SMS e Aplicativos:**
-  - Encaminha SMS recebidos e notificações de aplicativos selecionáveis pelo usuário (WhatsApp, Telegram, Mensagens, etc.) com modo configurável (`Piscante WAPP`, `Piscante SMS` ou `Aceso Fixo`).
-- **Mídia e Áudio:**
-  - Integra-se ao `MediaSessionManager` para enviar título, álbum, artista, tempo decorrido, duração total e estado de reprodução (`PLAY` / `PAUSED` / `NONE`).
-- **Comandos Bidirecionais do Guidão:**
-  - Faz polling a cada `700 ms` na característica de controles do painel para executar no celular: ajuste de volume, atender/recusar chamada, recusar com SMS rápido configurável, abrir rota para casa no Google Maps, play/pause/próxima/anterior (`x2`)/stop e abrir player preferido.
-- **Estabilidade em Segundo Plano e Privacidade:**
-  - `ForegroundService` (`connectedDevice|location`) com `PARTIAL_WAKE_LOCK`, reconexão BLE automática com backoff, watchdog GATT, fixação por endereço MAC e `CompanionDeviceManager`.
-  - **100% local/offline:** zero telemetria, analytics, rastreadores ou envio de dados para servidores externos.
+  - Encaminha SMS e notificações de aplicativos escolhidos pelo usuário com modo configurável (`Piscante WAPP`, `Piscante SMS` ou `Aceso Fixo`).
+- **Mídia e Comandos Bidirecionais do Guidão:**
+  - Envia título, álbum, artista, tempo decorrido/duração e estado de reprodução via `MediaSessionManager`.
+  - Lê os botões do punho a cada `700 ms` para volume, atender/recusar chamadas, SMS rápido de recusa, rota para casa, play/pause/próxima/anterior/stop e abrir player de mídia.
+- **Privacidade e Estabilidade:**
+  - Kotlin + Android SDK puro — **zero dependências externas em runtime**, **zero rastreadores**, **100% offline**.
+  - `ForegroundService` persistente (`connectedDevice|location`), reconexão BLE automática com backoff, watchdog GATT, fixação por MAC e `CompanionDeviceManager`.
 
 ---
 
-## Arquitetura do Projeto
+## 🌍 Tradução Comunitária (Weblate)
+
+Ajude a traduzir o **RideNav Link** no [Hosted Weblate](https://hosted.weblate.org/projects/ride-nav-link/):
+- Padrão internacional: **Inglês** (`res/values/strings.xml`)
+- Brasil: **Português (Brasil)** (`res/values-pt-rBR/strings.xml`)
+
+---
+
+## ☕ Apoio e Doações
+
+O **RideNav Link** é 100% gratuito, offline e open-source. Se ele ajuda nas suas viagens e no dia a dia:
+- **Ko-fi:** [https://ko-fi.com/jonasoliveira](https://ko-fi.com/jonasoliveira)
+- **PIX:** `d5c50784-cdd3-4426-8778-d65e841c8dbb`
+
+---
+
+## 🗂️ Estrutura do Projeto
 
 ```text
 .
-├── ride_nav_link/
-│   ├── app/src/main/
+├── ride_nav_link/app/src/
+│   ├── main/
 │   │   ├── AndroidManifest.xml
 │   │   ├── java/com/custom/ridenavlink/
-│   │   │   ├── AppPreferences.kt               # Preferências locais e apps selecionados
+│   │   │   ├── AppPreferences.kt               # Preferências locais e filtros de apps
 │   │   │   ├── BajajBleManager.kt              # Gerenciador BLE GATT, fila serial, telefonia e watchdog
 │   │   │   ├── BajajBridgeApp.kt               # Application singleton
 │   │   │   ├── BajajForegroundService.kt       # Serviço persistente em primeiro plano + WakeLock
-│   │   │   ├── BajajProtocol.kt                # Codificação/decodificação exata dos frames BLE
+│   │   │   ├── BajajProtocol.kt                # Codificação BLE e transliteração ASCII para o LCD
 │   │   │   ├── BootCompletedReceiver.kt        # Reinício automático pós-boot/atualização
+│   │   │   ├── GoogleMapsIconParser.kt         # Extração dual-tone de bitmap e rotatória de 7 pontas
 │   │   │   ├── GoogleMapsNotificationParser.kt # Parser PT-BR/EN de notificações do Google Maps
+│   │   │   ├── IconShapeClassifier.kt          # Classificador Kotlin puro (templates 32x32 + geometria)
 │   │   │   ├── M3DesignSystem.kt               # Sistema visual Material 3 nativo
 │   │   │   ├── MainActivity.kt                 # Interface principal, scanner BLE, testes e diagnóstico
-│   │   │   ├── MapsHybridNavigator.kt          # Interpolação GPS entre âncoras do Google Maps
+│   │   │   ├── MaintenanceManager.kt           # Lembretes de manutenção
+│   │   │   ├── MapsHybridNavigator.kt          # Interpolação GPS e retenção de chegada ao destino
 │   │   │   └── MapsNotificationListener.kt     # Listener de Maps, VoIP, alertas e MediaSession
-│   │   └── res/                                # Vetores adaptativos e ícones de manobras
-│   └── design_assets/                          # Conceitos vetoriais SVG da marca
-├── README.md                                   # Documentação padrão (Inglês)
-├── README_PT.md                                # Documentação em Português
-├── COMMUNICATION_PROTOCOL_REPORT.md            # Relatório técnico de protocolo (Inglês)
-└── RELATORIO_COMUNICACAO_PT.md                 # Relatório técnico de protocolo (Português)
+│   │   └── res/                                # Vetores adaptativos, ícones e strings (i18n)
+│   └── test/                                   # Testes unitários JVM (ícones, parser, ASCII)
+├── docs/badges/                                # Badges oficiais GitHub e Obtainium
+├── fastlane/metadata/android/                  # Metadados F-Droid / Fastlane e capturas
+├── gradle/wrapper/                             # Gradle Wrapper (com verificação SHA-256)
+├── COMMUNICATION_PROTOCOL_REPORT.md            # Relatório técnico do protocolo BLE (EN)
+└── RELATORIO_COMUNICACAO_PT.md                 # Relatório técnico do protocolo BLE (PT-BR)
 ```
 
 ---
 
-## Protocolo BLE GATT Utilizado
+## 🛠️ Como Compilar e Testar
 
-Todos os canais operam sobre as 6 características GATT do cluster (`-676e-6972-6565-6e69-676e4543544f`):
+Compilado com **Gradle padrão** (JDK 21 + Android SDK `compileSdk 34`), zero dependências externas em runtime e build reprodutível (`dependenciesInfo { includeInApk = false }`).
 
-| Canal | Prefixo UUID | Direção | Tamanho | Função |
-|---|---|---|---|---|
-| `CHAR_TBT` | `0110` | Celular → Painel | 48 bytes | Manobra ASCII, distância, saída de rotatória, ETD, ETA, checksum |
-| `CHAR_STATUS` | `0210` | Celular → Painel | 55 bytes | Bateria, sinal, headset HFP, volume, chamada ativa e heartbeat |
-| `CHAR_CALLS` | `0310` | Celular → Painel | 74 bytes | Alerta de chamada perdida / aviso fixo |
-| `CHAR_ALERTS` | `0410` | Celular → Painel | 40 bytes | Alerta piscante de SMS (`tipo 1`) ou Mensagens/Apps (`tipo 2`) |
-| `CHAR_MEDIA` | `0610` | Celular → Painel | 111 bytes | Música, álbum, artista, progresso/duração e status de mídia |
-| `CHAR_CONTROLS` | `0A10` | Painel → Celular | ≥ 14 bytes | Polling (`700 ms`) dos botões do punho esquerdo e ACKs |
-
-Para detalhes bit a bit dos frames e comparação técnica completa, consulte [`RELATORIO_COMUNICACAO_BAJAJ.md`](RELATORIO_COMUNICACAO_BAJAJ.md).
-
----
-
-## Como Compilar e Instalar
-
-O projeto compila diretamente com **Android SDK Build Tools + `kotlinc` + `d8` + `apksigner`**, sem necessidade de Gradle.
-
-### Windows (PowerShell)
-Ajuste os caminhos do Android SDK / `kotlinc` / keystore no topo de `build_clean.ps1` se necessário e execute:
-
-```powershell
-.\build_clean.ps1
-```
-
-### Linux / macOS
 ```bash
-chmod +x build_clean.sh
-./build_clean.sh
-```
+# Executar testes unitários
+./gradlew testDebugUnitTest
 
-### Instalação via ADB
-```bash
-adb install -r ride_nav_link/build/RideNavLink.apk
-```
+# Compilar APK de release
+./gradlew assembleRelease
 
+# Compilar e instalar APK debug via ADB
+./gradlew assembleDebug
+adb install -r ride_nav_link/app/build/outputs/apk/debug/app-debug.apk
+```

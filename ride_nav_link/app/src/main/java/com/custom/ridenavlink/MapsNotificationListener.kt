@@ -680,7 +680,16 @@ class MapsNotificationListener : NotificationListenerService() {
             @Suppress("DEPRECATION")
             val callPerson = extras.get("android.callPerson") as? Person
             callPerson?.name?.toString()?.let { candidates.add(it) }
+        }
 
+        extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.let { candidates.add(it) }
+        extras.getCharSequence(Notification.EXTRA_TITLE_BIG)?.toString()?.let { candidates.add(it) }
+        extras.getCharSequence("android.conversationTitle")?.toString()?.let { candidates.add(it) }
+        extras.getCharSequence("android.title")?.toString()?.let { candidates.add(it) }
+        extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()?.let { candidates.add(it) }
+        extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString()?.let { candidates.add(it) }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             @Suppress("DEPRECATION")
             val people = extras.getParcelableArrayList<Person>("android.people.list")
             people?.forEach { person ->
@@ -688,15 +697,8 @@ class MapsNotificationListener : NotificationListenerService() {
             }
         }
 
-        extras.getCharSequence("android.conversationTitle")?.toString()?.let { candidates.add(it) }
-        extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.let { candidates.add(it) }
-        extras.getCharSequence(Notification.EXTRA_TITLE_BIG)?.toString()?.let { candidates.add(it) }
-        extras.getCharSequence("android.title")?.toString()?.let { candidates.add(it) }
-        extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()?.let { candidates.add(it) }
-        extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString()?.let { candidates.add(it) }
-
         val bestCandidate = candidates
-            .map { cleanCandidateText(it) }
+            .map { stripCallPrefix(cleanCandidateText(it)) }
             .firstOrNull { !isGenericCallPlaceholder(it, pkg) }
             ?: ""
 
@@ -707,6 +709,31 @@ class MapsNotificationListener : NotificationListenerService() {
         }
 
         return callState to resolved
+    }
+
+    private fun stripCallPrefix(text: String): String {
+        val prefixes = listOf(
+            "chamada recebida de ",
+            "ligação recebida de ",
+            "ligacao recebida de ",
+            "chamada de voz de ",
+            "chamada de vídeo de ",
+            "chamada de video de ",
+            "chamada de ",
+            "ligação de ",
+            "ligacao de ",
+            "incoming call from ",
+            "voice call from ",
+            "video call from ",
+            "call from "
+        )
+        val low = text.lowercase(Locale.getDefault())
+        for (prefix in prefixes) {
+            if (low.startsWith(prefix) && text.length > prefix.length) {
+                return text.substring(prefix.length).trim()
+            }
+        }
+        return text
     }
 
     private fun cleanCandidateText(raw: String): String {
@@ -722,32 +749,44 @@ class MapsNotificationListener : NotificationListenerService() {
 
     private fun isGenericCallPlaceholder(text: String, pkg: String): Boolean {
         if (text.isBlank()) return true
-        val norm = text.lowercase(Locale.getDefault()).trim()
-        if (norm == "whatsapp" || norm == "whatsapp business" || norm == "telefone" || norm == "phone") return true
+        val norm = GoogleMapsNotificationParser.normalizeForMatch(text)
+        if (norm == "whatsapp" || norm == "whatsapp business" || norm == "telefone" ||
+            norm == "phone" || norm == "voce" || norm == "you" || norm == "me" ||
+            norm == "samsung" || norm == "android"
+        ) return true
         if ("^\\d{1,2}:\\d{2}(:\\d{2})?$".toRegex().matches(norm)) return true
         val genericPhrases = listOf(
             "chamada de voz",
-            "chamada de vídeo",
             "chamada de video",
             "chamada recebida",
             "chamada em andamento",
+            "chamada em espera",
             "chamada ativa",
-            "ligação recebida",
+            "chamada perdida",
+            "chamada criptografada",
+            "ligacao de voz",
+            "ligacao de video",
             "ligacao recebida",
+            "ligacao em andamento",
+            "criptografada de ponta a ponta",
+            "end-to-end encrypted",
             "incoming call",
             "incoming voice call",
             "incoming video call",
+            "whatsapp voice call",
+            "whatsapp video call",
             "voice call",
             "video call",
             "ongoing call",
             "calling",
             "ringing",
-            "tocando"
+            "tocando",
+            "chamando"
         )
-        if (genericPhrases.any { norm == it || norm.startsWith("$it ") || norm.startsWith("$it •") }) {
+        if (genericPhrases.any { norm == it || norm.startsWith("$it ") || norm.startsWith("$it •") || norm.contains(it) }) {
             return true
         }
-        return pkg.contains("whatsapp") && norm.contains("chamada do whatsapp")
+        return pkg.contains("whatsapp") && (norm.contains("whatsapp") && (norm.contains("chamada") || norm.contains("ligacao") || norm.contains("call")))
     }
 
     private fun handleMapsNavigationNotification(
@@ -810,10 +849,21 @@ class MapsNotificationListener : NotificationListenerService() {
             provider = NavProvider.GOOGLE_MAPS,
             roundaboutCounterClockwise = isCounterClockwise,
             iconManeuverCode = iconManeuver?.maneuverCode,
-            iconRoundaboutExit = iconManeuver?.roundaboutExit ?: 0
-        ) ?: return
+            iconRoundaboutExit = iconManeuver?.roundaboutExit ?: 0,
+            iconConfidenceScore = iconManeuver?.confidenceScore ?: 0f
+        ) ?: run {
+            if (isMapsRouteActive && !isOngoingOrNav && !hasActiveGoogleMapsNotification()) {
+                resetMapsSession()
+                bleManager.onMapsNotificationCleared()
+            }
+            return
+        }
 
         if (!parsed.isArrival && !isOngoingOrNav && (!parsed.isTurnDistanceExact || parsed.isAmbientStatusOnly)) {
+            if (isMapsRouteActive && !hasActiveGoogleMapsNotification()) {
+                resetMapsSession()
+                bleManager.onMapsNotificationCleared()
+            }
             return
         }
 
@@ -825,7 +875,7 @@ class MapsNotificationListener : NotificationListenerService() {
 
         Log.d(
             TAG,
-            "Google Maps TBT: dist=${parsed.distanceMeters}m etd=${parsed.totalDistanceMeters}m code=${parsed.maneuverCode.toInt().toChar()} exit=${parsed.roundaboutExit} arrival=${parsed.isArrival} street='${parsed.displayStreetText}' raw=[t='$title'|x='$text'|s='$subText'|b='$bigText'|ic='${iconManeuver?.confidence ?: "none"}']"
+            "Google Maps TBT: dist=${parsed.distanceMeters}m etd=${parsed.totalDistanceMeters}m code=${parsed.maneuverCode.toInt().toChar()} exit=${parsed.roundaboutExit} arrival=${parsed.isArrival} street='${parsed.displayStreetText}' raw=[t='$title'|x='$text'|s='$subText'|b='$bigText'|ic='${iconManeuver?.confidence ?: "none"}'(${String.format(Locale.US, "%.2f", iconManeuver?.confidenceScore ?: 0f)})]"
         )
 
         bleManager.onMapsNavigationAnchor(parsed, NavProvider.GOOGLE_MAPS)

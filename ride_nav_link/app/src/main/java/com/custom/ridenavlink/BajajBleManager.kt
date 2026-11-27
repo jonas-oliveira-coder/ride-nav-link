@@ -1,4 +1,4 @@
-﻿package com.custom.ridenavlink
+package com.custom.ridenavlink
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -895,6 +895,7 @@ class BajajBleManager(
                 wasOffhookState = false
                 isOutgoingTelephonyCall = false
                 telephonyCallerName = ""
+                lastIncomingPhoneNumber = ""
             }
         }
         syncCallStateToCluster()
@@ -1009,8 +1010,20 @@ class BajajBleManager(
     private fun pickBestCallerName(primary: String, secondary: String): String {
         val p = primary.trim()
         val s = secondary.trim()
-        val pIsPlaceholder = p.isEmpty() || p == "Chamada recebida" || p == "Em ligação" || p == "Discando..."
-        val sIsPlaceholder = s.isEmpty() || s == "Chamada recebida" || s == "Em ligação" || s == "Discando..."
+        fun isPlaceholder(name: String): Boolean {
+            if (name.isEmpty()) return true
+            val low = name.lowercase(Locale.getDefault())
+            return low == "chamada recebida" ||
+                low == "em ligação" ||
+                low == "em ligacao" ||
+                low == "discando..." ||
+                low == "ligação" ||
+                low == "ligacao" ||
+                low.startsWith("ligação ") ||
+                low.startsWith("ligacao ")
+        }
+        val pIsPlaceholder = isPlaceholder(p)
+        val sIsPlaceholder = isPlaceholder(s)
         if (pIsPlaceholder && !sIsPlaceholder) return s
         if (!pIsPlaceholder && sIsPlaceholder) return p
         val pLooksNumeric = p.count { it.isDigit() } >= 6 && p.all { it.isDigit() || it in setOf('+', '-', ' ', '(', ')') }

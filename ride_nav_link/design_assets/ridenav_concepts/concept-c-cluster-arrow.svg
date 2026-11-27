@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="title">
-  <title id="title">RideNav Link — Concept C: Cluster Arrow (Atual)</title>
-  <!-- Open 270-degree instrument cluster arc (center 128, 142; R=96, r=68) -->
-  <path fill="#111111" d="M 60.1 209.9 A 96 96 0 1 1 195.9 209.9 L 176.1 190.1 A 68 68 0 1 0 79.9 190.1 Z"/>
-  <!-- Centered forward navigation chevron -->
-  <path fill="#111111" d="M 128 90 L 173 168 L 128 142 L 83 168 Z"/>
-</svg>

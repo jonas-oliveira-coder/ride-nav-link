@@ -44,7 +44,8 @@ class MapsHybridNavigator(
 
     companion object {
         private const val ARRIVAL_HOLD_DURATION_MS = 35_000L
-        private const val ARRIVAL_POST_CLEAR_MIN_MS = 22_000L
+        private const val ARRIVAL_POST_CLEAR_MIN_MS = 25_000L
+        private const val RECENT_DESTINATION_MEMORY_MS = 90_000L
     }
 
     private var activeProvider: NavProvider = NavProvider.GOOGLE_MAPS
@@ -52,6 +53,9 @@ class MapsHybridNavigator(
     private var isArrivedState = false
     private var isRerouting = false
     private var arrivalEnteredMs = 0L
+    private var lastDestinationSeenMs = 0L
+    private var lastDestinationStreet = ""
+    private var isApproachingDestination = false
 
     private var anchorTurnMeters = 0
     private var anchorTotalMeters = 0
@@ -157,14 +161,14 @@ class MapsHybridNavigator(
             return
         }
 
-        // Prevent exiting arrival state due to residual end-of-route notifications
-        if (isNavigating && isArrivedState &&
-            provider == activeProvider &&
-            parsed.solidManeuverCode == BajajProtocol.ARROW_DESTINATION_SOLID &&
-            parsed.distanceMeters <= 35 &&
-            (now - arrivalEnteredMs) < 12_000L
-        ) {
-            return
+        // Prevent exiting arrival state due to residual end-of-route or ambient post-arrival notifications
+        if (isNavigating && isArrivedState && provider == activeProvider) {
+            val withinGuard = (now - arrivalEnteredMs) < 20_000L
+            val isResidualDest = parsed.solidManeuverCode == BajajProtocol.ARROW_DESTINATION_SOLID &&
+                parsed.distanceMeters <= 45
+            if (withinGuard && (isResidualDest || parsed.isAmbientStatusOnly)) {
+                return
+            }
         }
 
         mainHandler.removeCallbacks(arrivalHoldRunnable)
@@ -174,8 +178,20 @@ class MapsHybridNavigator(
         if (!sameProvider) {
             lastFixLocation = null
             traveledSinceAnchorMeters = 0.0
+            lastDestinationSeenMs = 0L
+            lastDestinationStreet = ""
         }
         activeProvider = provider
+
+        if (parsed.isApproachingDestination || parsed.solidManeuverCode == BajajProtocol.ARROW_DESTINATION_SOLID) {
+            isApproachingDestination = true
+            lastDestinationSeenMs = now
+            if (parsed.displayStreetText.isNotBlank()) {
+                lastDestinationStreet = parsed.displayStreetText
+            }
+        } else if (parsed.solidManeuverCode != BajajProtocol.ARROW_STRAIGHT_SOLID) {
+            isApproachingDestination = false
+        }
 
         val newStreetNorm = normalizeStreet(parsed.displayStreetText)
         val sameManeuver = wasNavigating &&
@@ -252,12 +268,18 @@ class MapsHybridNavigator(
 
         val currentTurn = currentInterpolatedTurnMeters()
         val currentTotal = currentInterpolatedTotalMeters(currentTurn)
-        val nearDestinationEnd = anchorSolidManeuver == BajajProtocol.ARROW_DESTINATION_SOLID ||
-            currentTotal <= 350 ||
-            currentTurn <= 180
+        val recentlySawDestination = lastDestinationSeenMs > 0L &&
+            (now - lastDestinationSeenMs) <= RECENT_DESTINATION_MEMORY_MS
+        val nearDestinationEnd = isApproachingDestination ||
+            anchorSolidManeuver == BajajProtocol.ARROW_DESTINATION_SOLID ||
+            recentlySawDestination ||
+            currentTotal <= 400 ||
+            currentTurn <= 250 ||
+            (anchorEtaSeconds in 0..90 && currentTotal <= 600)
 
         if (nearDestinationEnd) {
-            enterArrivalState(activeProvider, "Você chegou ao destino", null)
+            val arrivalLabel = lastDestinationStreet.ifBlank { "Você chegou ao destino" }
+            enterArrivalState(activeProvider, arrivalLabel, null)
         } else {
             stopAndNotify()
         }
@@ -269,6 +291,9 @@ class MapsHybridNavigator(
         isArrivedState = false
         isRerouting = false
         arrivalEnteredMs = 0L
+        lastDestinationSeenMs = 0L
+        lastDestinationStreet = ""
+        isApproachingDestination = false
         traveledSinceAnchorMeters = 0.0
         lastEmittedTurnMeters = -1
         lastEmittedManeuver = 0
@@ -348,10 +373,10 @@ class MapsHybridNavigator(
 
         val newTurn = currentInterpolatedTurnMeters()
         val newTotal = currentInterpolatedTotalMeters(newTurn)
-        if ((anchorSolidManeuver == BajajProtocol.ARROW_DESTINATION_SOLID && anchorTurnMeters > 0 && newTurn <= 25) ||
+        if (((isApproachingDestination || anchorSolidManeuver == BajajProtocol.ARROW_DESTINATION_SOLID) && anchorTurnMeters > 0 && newTurn <= 25) ||
             (anchorTotalMeters > 0 && anchorTotalMeters <= 120 && newTotal <= 15 && newTurn <= 15)
         ) {
-            enterArrivalState(activeProvider, "Você chegou ao destino", null)
+            enterArrivalState(activeProvider, lastDestinationStreet.ifBlank { "Você chegou ao destino" }, null)
             return
         }
 

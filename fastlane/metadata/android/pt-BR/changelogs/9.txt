@@ -1,0 +1,5 @@
+- Nova validação visual de ícones do Google Maps (dual-tone + templates 32x32 + geometria; rotatória mantida)
+- Corrigido bug de 1 km reto ao iniciar rota e fluxo de chegada ao destino quando a notificação some
+- Transliteração de acentos para o LCD e correção do nome do chamador em ligações normais e WhatsApp
+- Adicionado SHA-256 do Gradle Wrapper para o F-Droid e 21 testes unitários
+

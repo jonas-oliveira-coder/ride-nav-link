@@ -35,7 +35,8 @@ data class ParsedMapsNavigation(
     val isTurnDistanceExact: Boolean,
     val isAmbientStatusOnly: Boolean,
     val isArrival: Boolean = false,
-    val isRerouting: Boolean = false
+    val isRerouting: Boolean = false,
+    val isApproachingDestination: Boolean = false
 )
 
 data class ParsedSubTextInfo(
@@ -251,7 +252,8 @@ object GoogleMapsNotificationParser {
         provider: NavProvider = NavProvider.GOOGLE_MAPS,
         roundaboutCounterClockwise: Boolean = true,
         iconManeuverCode: Byte? = null,
-        iconRoundaboutExit: Int = 0
+        iconRoundaboutExit: Int = 0,
+        iconConfidenceScore: Float = 0f
     ): ParsedMapsNavigation? {
         val cleanTitle = title.trim()
         val cleanText = text.trim()
@@ -304,7 +306,16 @@ object GoogleMapsNotificationParser {
         val isExplicitTurnText = textManeuver != null &&
             textManeuver != BajajProtocol.ARROW_STRAIGHT_SOLID &&
             textManeuver != BajajProtocol.ARROW_DESTINATION_SOLID
-        val effectiveTotalForArrival = subInfo.totalDistanceMeters ?: fallbackTotalDistanceMeters
+        val iconIsDestination = iconManeuverCode == BajajProtocol.ARROW_DESTINATION_SOLID &&
+            (iconConfidenceScore <= 0f || iconConfidenceScore >= 0.70f)
+        val effectiveTotalForArrival = if ((iconIsDestination || textManeuver == BajajProtocol.ARROW_DESTINATION_SOLID) &&
+            subInfo.totalDistanceMeters == null &&
+            parsedTurnDist != null
+        ) {
+            parsedTurnDist
+        } else {
+            subInfo.totalDistanceMeters ?: fallbackTotalDistanceMeters
+        }
         val nearFinalDestination = !isExplicitTurnText &&
             effectiveTotalForArrival != null &&
             effectiveTotalForArrival in 0..45 &&
@@ -313,12 +324,14 @@ object GoogleMapsNotificationParser {
             textIsRoundabout && !iconIsRoundabout -> textManeuver
             iconIsRoundabout && !textIsRoundabout && textManeuver != null -> textManeuver
             textManeuver == BajajProtocol.ARROW_DESTINATION_SOLID -> BajajProtocol.ARROW_DESTINATION_SOLID
+            iconIsDestination && !isExplicitTurnText -> BajajProtocol.ARROW_DESTINATION_SOLID
             textManeuver == BajajProtocol.ARROW_UTURN_LEFT_SOLID ||
                 textManeuver == BajajProtocol.ARROW_UTURN_RIGHT_SOLID -> textManeuver
             textManeuver == BajajProtocol.ARROW_SHARP_LEFT_SOLID ||
                 textManeuver == BajajProtocol.ARROW_SHARP_RIGHT_SOLID -> textManeuver
             nearFinalDestination -> BajajProtocol.ARROW_DESTINATION_SOLID
-            else -> iconManeuverCode ?: textManeuver
+            iconManeuverCode != null && (iconConfidenceScore <= 0f || iconConfidenceScore >= 0.55f) -> iconManeuverCode
+            else -> textManeuver ?: iconManeuverCode
         }
         val isExplicitArrival = isExplicitArrivalPhrase(
             fullArrivalNorm,
@@ -348,17 +361,41 @@ object GoogleMapsNotificationParser {
             return null
         }
 
+        // Prevent fake "1 km straight" flash on first route start when Maps posts an initial
+        // bootstrap notification before any real turn/total distance is available.
+        if (!isExplicitArrival && !isRerouting &&
+            parsedTurnDist == null &&
+            fallbackTurnDistanceMeters == null &&
+            subInfo.totalDistanceMeters == null
+        ) {
+            return null
+        }
+
         val resolvedTurnDist = if (isExplicitArrival) {
             0
         } else {
             parsedTurnDist
                 ?: fallbackTurnDistanceMeters
                 ?: subInfo.totalDistanceMeters
-                ?: 1000
+                ?: 0
         }
+
+        val isApproachingDestination = !isExplicitArrival &&
+            (detectedManeuver == BajajProtocol.ARROW_DESTINATION_SOLID ||
+                iconIsDestination ||
+                textManeuver == BajajProtocol.ARROW_DESTINATION_SOLID)
 
         val resolvedSolidManeuver = when {
             isExplicitArrival -> BajajProtocol.ARROW_DESTINATION_SOLID
+            isApproachingDestination -> {
+                // Show straight arrow while approaching final destination;
+                // switch to blinking arrival icon once within final arrival threshold (<= 40m) or on arrival.
+                if (resolvedTurnDist > 40) {
+                    BajajProtocol.ARROW_STRAIGHT_SOLID
+                } else {
+                    BajajProtocol.ARROW_DESTINATION_SOLID
+                }
+            }
             detectedManeuver != null -> {
                 // Keep straight arrow above 3 km on long stretches; show upcoming turn within 3 km
                 if (detectedManeuver != BajajProtocol.ARROW_STRAIGHT_SOLID && resolvedTurnDist > 3000) {
@@ -383,6 +420,13 @@ object GoogleMapsNotificationParser {
 
         val resolvedTotalDist = if (isExplicitArrival) {
             0
+        } else if ((isApproachingDestination || resolvedSolidManeuver == BajajProtocol.ARROW_DESTINATION_SOLID) &&
+            subInfo.totalDistanceMeters == null &&
+            parsedTurnDist != null
+        ) {
+            // Destination maneuver active without subText total distance:
+            // sync ETD with remaining turn distance instead of holding a stale multi-km value.
+            parsedTurnDist
         } else {
             subInfo.totalDistanceMeters
                 ?: fallbackTotalDistanceMeters
@@ -455,7 +499,8 @@ object GoogleMapsNotificationParser {
             isTurnDistanceExact = parsedTurnDist != null || isExplicitArrival,
             isAmbientStatusOnly = !isExplicitArrival && detectedManeuver == null && parsedTurnDist == null,
             isArrival = isExplicitArrival,
-            isRerouting = isRerouting
+            isRerouting = isRerouting,
+            isApproachingDestination = isApproachingDestination
         )
     }
 

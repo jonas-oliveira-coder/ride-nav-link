@@ -11,8 +11,8 @@ android {
         applicationId = "com.custom.ridenavlink"
         minSdk = 26
         targetSdk = 34
-        versionCode = 8
-        versionName = "2.4.3"
+        versionCode = 9
+        versionName = "2.4.4"
     }
 
     // Required for F-Droid & IzzyOnDroid Reproducible Builds (strips Google-encrypted dependency metadata)
@@ -63,6 +63,7 @@ android {
 }
 
 dependencies {
-    // Pure Android SDK + Kotlin stdlib (zero third-party/proprietary dependencies)
+    // Pure Android SDK + Kotlin stdlib (zero third-party/proprietary runtime dependencies)
+    testImplementation("junit:junit:4.13.2")
 }
 

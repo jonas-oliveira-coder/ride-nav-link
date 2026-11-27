@@ -1,5 +1,37 @@
 # Changelog
 
+## [2.4.4] - 2026-11-27
+
+### 🇺🇸 English
+- **Overhauled Google Maps icon recognition (`IconShapeClassifier`)**:
+  - Dual-tone foreground extraction (`primaryMask` + `secondaryMask`) separates active routes from faded secondary branches for reliable Fork, Ramp, Keep, and Merge detection.
+  - Hybrid 32×32 canonical template matching + arrow geometry descriptors accurately distinguish Straight, Slight (45°), Turn (90°), Sharp (135°), and U-Turn (180°) maneuvers while keeping 7-spoke roundabout detection intact.
+  - 2D connected-component detection for composite Destination icons (Pin + Road left/right and centered Pin).
+- **Improved destination arrival & startup navigation**:
+  - Removed the false `1 km` straight-arrow fallback when Google Maps starts without a distance yet.
+  - Displays a straight arrow with synced ETD while approaching the final destination (`> 40 m`), then automatically switches to the blinking arrival icon (`0 m`) for 25–35 s upon arrival or when the notification dismisses.
+- **Calls & Bajaj LCD text fixes**:
+  - Added US-ASCII transliteration (`á → a`, `ç → c`, `ã → a`, etc.) for calls, missed calls, alerts, and media so accented characters never render blank on the LCD.
+  - Fixed stale phone numbers leaking into subsequent calls on Android 12+ and improved caller name extraction for WhatsApp and Dialer notifications.
+- **F-Droid security & automated tests**:
+  - Added `distributionSha256Sum` to `gradle-wrapper.properties` (resolving `insecure-gradlew`).
+  - Added 21 JVM unit tests covering icon classification, ASCII transliteration, startup filtering, and destination arrival.
+
+### 🇧🇷 Português (BR)
+- **Nova engine de reconhecimento de ícones do Google Maps (`IconShapeClassifier`)**:
+  - Extração Dual-Tone (`primaryMask` + `secondaryMask`) separa a rota ativa da via secundária esmaecida para detectar Bifurcação, Alça, Manter-se na faixa e Convergência.
+  - Classificador híbrido (templates canônicos 32×32 + geometria da seta) diferencia com precisão Reto, Leve (45°), Curva (90°), Acentuada (135°) e Retorno (180°), mantendo a rotatória de 7 pontas intacta.
+  - Detecção por componentes conectados 2D para ícones compostos de destino (Pino + Estrada à esquerda/direita e Pino central).
+- **Chegada ao destino e início de rota corrigidos**:
+  - Removido o bug de `1 km` linha reta ao iniciar a navegação antes de o Google Maps enviar a primeira distância real.
+  - Exibe seta reta com ETD sincronizado na aproximação final (`> 40 m`) e muda automaticamente para o ícone de chegada piscando (`0 m`) por 25–35 s ao chegar ou quando a notificação some.
+- **Correções em ligações e acentos no LCD Bajaj**:
+  - Adicionada transliteração ASCII (`á → a`, `ç → c`, `ã → a`, etc.) em ligações, chamadas perdidas, alertas e mídia para não ficar espaço em branco no painel.
+  - Corrigido reaproveitamento de número da ligação anterior no Android 12+ e melhorada a extração do nome real em ligações normais e WhatsApp.
+- **F-Droid e testes automatizados**:
+  - Adicionado `distributionSha256Sum` em `gradle-wrapper.properties` (removendo o aviso `insecure-gradlew`).
+  - Adicionados 21 testes unitários cobrindo classificação de ícones, acentos, início de rota e chegada.
+
 ## [2.4.3] - 2026-11-23
 
 ### 🇺🇸 English

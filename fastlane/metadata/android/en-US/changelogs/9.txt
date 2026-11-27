@@ -1,0 +1,5 @@
+- Overhauled Google Maps icon recognition (dual-tone + 32x32 templates + geometry; roundabout preserved)
+- Fixed 1 km straight startup bug and improved straight-to-arrival flow when the notification disappears
+- Transliterated accented characters to ASCII for the LCD and fixed caller names in Dialer and WhatsApp
+- Added Gradle Wrapper SHA-256 verification for F-Droid and 21 unit tests
+
